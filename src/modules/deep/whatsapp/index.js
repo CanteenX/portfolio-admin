@@ -1,0 +1,11 @@
+export { WhatsAppCampaignsPage } from "./WhatsAppCampaignsPage";
+export { CampaignDetailPage } from "./CampaignDetailPage";
+export { CampaignCreatePage } from "./CampaignCreatePage";
+export { TemplateListPage } from "./TemplateListPage";
+export { TemplateCreatePage } from "./TemplateCreatePage";
+export { TriggerListPage } from "./TriggerListPage";
+export { TriggerFormPage } from "./TriggerFormPage";
+export { AudienceTypeListPage } from "./AudienceTypeListPage";
+export { AudienceTypeFormPage } from "./AudienceTypeFormPage";
+export { WhatsAppInboxPage } from "./WhatsAppInboxPage";
+export { AnalyticsDashboardPage } from "./AnalyticsDashboardPage";

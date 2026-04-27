@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    /* Light mode (default root) */
+    :root {
+        --background: 240 5% 96%;
+        --foreground: 210 11% 32%;
+        --card: 0 0% 100%;
+        --card-foreground: 210 11% 32%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 210 11% 32%;
+        --primary: 24 95% 48%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 210 14% 93%;
+        --secondary-foreground: 210 11% 32%;
+        --muted: 210 14% 93%;
+        --muted-foreground: 215 8% 53%;
+        --accent: 210 14% 93%;
+        --accent-foreground: 210 11% 32%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 214 14% 91%;
+        --input: 214 14% 91%;
+        --ring: 24 95% 48%;
+        --chart-1: 24 95% 48%;
+        --chart-2: 142 71% 45%;
+        --chart-3: 199 89% 48%;
+        --chart-4: 48 96% 53%;
+        --chart-5: 262 83% 58%;
+        --radius: 0.25rem;
+        --success: 142 71% 45%;
+        --warning: 48 96% 53%;
+        --danger: 0 84% 60%;
+        --info: 217 91% 60%;
+    }
+
+    /* Dark mode */
+    .dark {
+        --background: 240 10% 3.9%;
+        --foreground: 0 0% 98%;
+        --card: 240 10% 7%;
+        --card-foreground: 0 0% 98%;
+        --popover: 240 10% 3.9%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 24 95% 48%;
+        --primary-foreground: 0 0% 98%;
+        --secondary: 240 4% 16%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 240 4% 16%;
+        --muted-foreground: 240 5% 65%;
+        --accent: 240 4% 16%;
+        --accent-foreground: 0 0% 98%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 4% 16%;
+        --input: 240 4% 16%;
+        --ring: 24 95% 48%;
+        --chart-1: 24 95% 48%;
+        --chart-2: 142 71% 45%;
+        --chart-3: 199 89% 48%;
+        --chart-4: 48 96% 53%;
+        --chart-5: 262 83% 58%;
+        --radius: 0.25rem;
+        --success: 142 71% 45%;
+        --warning: 48 96% 53%;
+        --danger: 0 84% 60%;
+        --info: 217 91% 60%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-family: 'IBM Plex Sans', sans-serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Barlow Condensed', sans-serif;
+    }
+    code, pre, .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+    }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: hsl(var(--background)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: hsl(var(--muted-foreground)); background: hsl(var(--secondary) / 0.5); padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid hsl(var(--border)); }
+.data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid hsl(var(--border)); font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; }
+.data-table tr:hover td { background: hsl(var(--muted) / 0.5); }
+
+.status-pending { background: hsl(48 96% 53% / 0.2); color: hsl(48 96% 53%); border: 1px solid hsl(48 96% 53% / 0.3); padding: 0.25rem 0.5rem; border-radius: 0.125rem; font-size: 0.75rem; font-weight: 600; }
+.status-completed, .status-dispatched, .status-delivered { background: hsl(142 71% 45% / 0.2); color: hsl(142 71% 45%); border: 1px solid hsl(142 71% 45% / 0.3); padding: 0.25rem 0.5rem; border-radius: 0.125rem; font-size: 0.75rem; font-weight: 600; }
+.status-in_progress { background: hsl(217 91% 60% / 0.2); color: hsl(217 91% 60%); border: 1px solid hsl(217 91% 60% / 0.3); padding: 0.25rem 0.5rem; border-radius: 0.125rem; font-size: 0.75rem; font-weight: 600; }
+
+.glow-primary { box-shadow: 0 0 20px hsl(24 95% 48% / 0.3); }
+.industrial-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 0.125rem; transition: border-color 200ms ease; }
+.industrial-card:hover { border-color: hsl(var(--primary) / 0.3); }
+.stat-card-accent { border-top: 2px solid hsl(var(--primary)); }
