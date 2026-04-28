@@ -62,6 +62,12 @@ const EcommerceModulePage = React.lazy(() => import("../modules/deep/ecommerce/E
 const CrmModulePage = React.lazy(() => import("../modules/deep/crm/CrmModulePage").then(m => ({ default: m.CrmModulePage })));
 const JobModulePage = React.lazy(() => import("../modules/deep/job/JobModulePage").then(m => ({ default: m.JobModulePage })));
 
+// Portfolio CMS pages
+const PortfolioProjectsPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioProjectsPage").then(m => ({ default: m.PortfolioProjectsPage })));
+const PortfolioTeamPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioTeamPage").then(m => ({ default: m.PortfolioTeamPage })));
+const PortfolioSettingsPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioSettingsPage").then(m => ({ default: m.PortfolioSettingsPage })));
+const PortfolioContactsPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioContactsPage").then(m => ({ default: m.PortfolioContactsPage })));
+
 // RBAC pages
 const RbacMenuMasterPage = React.lazy(() => import("../modules/rbac/MenuMasterPage"));
 const RbacActionTypePage = React.lazy(() => import("../modules/rbac/ActionTypePage"));
@@ -132,6 +138,11 @@ function AuthenticatedRoutes() {
               <Route path="/job" element={<JobModulePage />} />
               <Route path="/job/postings" element={<JobModulePage />} />
               <Route path="/job/applications" element={<JobModulePage />} />
+              {/* Portfolio CMS */}
+              <Route path="/portfolio/projects" element={<PortfolioProjectsPage />} />
+              <Route path="/portfolio/team" element={<PortfolioTeamPage />} />
+              <Route path="/portfolio/settings" element={<PortfolioSettingsPage />} />
+              <Route path="/portfolio/contacts" element={<PortfolioContactsPage />} />
               {/* Charts */}
               <Route path="/charts/apex" element={<ApexChartsPage />} />
               <Route path="/charts/chartjs" element={<ChartjsPage />} />

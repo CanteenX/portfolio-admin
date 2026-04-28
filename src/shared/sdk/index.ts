@@ -19,3 +19,7 @@ export * from "./tasks";
 export * from "./todo";
 export * from "./ui-feature-flags";
 export * from "./whatsapp";
+export * from "./portfolio-projects";
+export * from "./portfolio-team";
+export * from "./portfolio-settings";
+export * from "./portfolio-contacts";
