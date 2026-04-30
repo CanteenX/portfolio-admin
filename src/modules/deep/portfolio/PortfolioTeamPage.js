@@ -1,11 +1,82 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../../core/auth/AuthContext";
 import {
   listPortfolioTeam,
   createPortfolioMember,
   updatePortfolioMember,
-  deletePortfolioMember
+  deletePortfolioMember,
+  uploadPortfolioImage,
+  listTechStacks
 } from "../../../shared/sdk";
+
+const API_URL = process.env.REACT_APP_API_URL ?? "http://localhost:7002";
+
+function imgSrc(url) {
+  if (!url) return null;
+  if (url.startsWith("http")) return url;
+  return `${API_URL}${url}`;
+}
+
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+
+function validateImageFile(file) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) return "Only JPEG, PNG, WebP, or GIF allowed";
+  if (file.size > MAX_IMAGE_SIZE) return "File must be under 10 MB";
+  return null;
+}
+
+function AvatarUploadField({ value, onChange, api }) {
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState(null);
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const err = validateImageFile(file);
+    if (err) { setUploadErr(err); e.target.value = ""; return; }
+    setUploading(true);
+    setUploadErr(null);
+    try {
+      const url = await uploadPortfolioImage(api, file);
+      onChange(url);
+    } catch {
+      setUploadErr("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  return (
+    <div>
+      <label className={labelClass}>Avatar Image</label>
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+      <div className="mt-1 flex items-center gap-3 flex-wrap">
+        {value && (
+          <div className="relative group">
+            <img src={imgSrc(value)} alt="avatar" className="w-12 h-12 object-cover rounded-full border border-border" />
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] hidden group-hover:flex items-center justify-center"
+            >×</button>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="px-3 py-2 rounded-lg border border-border text-sm hover:bg-muted disabled:opacity-50"
+        >
+          {uploading ? "Uploading..." : value ? "Replace" : "Choose Photo"}
+        </button>
+        {uploadErr && <span className="text-xs text-red-400">{uploadErr}</span>}
+      </div>
+    </div>
+  );
+}
 
 const EMPTY_FORM = {
   id: "", slug: "", name: "", role: "", avatar: "", glow: "#ffffff",
@@ -27,7 +98,12 @@ export function PortfolioTeamPage() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [techStackOptions, setTechStackOptions] = useState([]);
   const LIMIT = 20;
+
+  useEffect(() => {
+    listTechStacks(api).then(ts => setTechStackOptions(ts.map(t => t.name))).catch(() => {});
+  }, [api]);
 
   async function loadData(p = 1) {
     setLoading(true);
@@ -43,7 +119,7 @@ export function PortfolioTeamPage() {
     }
   }
 
-  useEffect(() => { loadData(page); }, [page]);
+  useEffect(() => { loadData(page); }, [page, api]);
 
   function openCreate() { setEditing(null); setForm(EMPTY_FORM); setShowModal(true); }
 
@@ -133,21 +209,20 @@ export function PortfolioTeamPage() {
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Member</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Role</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">ID</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Order</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
               <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="text-center py-12 text-muted-foreground">Loading...</td></tr>
+              <tr><td colSpan={5} className="text-center py-12 text-muted-foreground">Loading...</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={6} className="text-center py-12 text-muted-foreground">No team members yet.</td></tr>
+              <tr><td colSpan={5} className="text-center py-12 text-muted-foreground">No team members yet.</td></tr>
             ) : items.map(item => (
               <tr key={item._id} className="border-b border-border hover:bg-muted/20 transition-colors">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    {item.avatar && <img src={item.avatar} alt={item.name} className="w-8 h-8 rounded-full object-cover" />}
+                    {item.avatar && <img src={imgSrc(item.avatar)} alt={item.name} className="w-8 h-8 rounded-full object-cover" />}
                     <div>
                       <div className="font-medium">{item.name}</div>
                       <div className="text-xs text-muted-foreground font-mono">{item.slug}</div>
@@ -156,7 +231,6 @@ export function PortfolioTeamPage() {
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{item.role}</td>
                 <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{item.id}</td>
-                <td className="px-4 py-3 text-muted-foreground">{item.order}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.isActive ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
                     {item.isActive ? "Active" : "Hidden"}
@@ -196,12 +270,32 @@ export function PortfolioTeamPage() {
                 <F label="Slug *" value={form.slug} onChange={v => setField("slug", v)} required placeholder="priya-raman" />
                 <F label="Name *" value={form.name} onChange={v => setField("name", v)} required />
                 <F label="Role *" value={form.role} onChange={v => setField("role", v)} required />
-                <F label="Avatar URL" value={form.avatar} onChange={v => setField("avatar", v)} className="col-span-2" />
-                <F label="Glow Color" value={form.glow} onChange={v => setField("glow", v)} placeholder="#34d399" />
+              </div>
+
+              <AvatarUploadField value={form.avatar} onChange={v => setField("avatar", v)} api={api} />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Glow Color</label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={form.glow || "#ffffff"}
+                      onChange={e => setField("glow", e.target.value)}
+                      className="w-10 h-10 cursor-pointer rounded border border-border bg-transparent p-0.5"
+                    />
+                    <input
+                      className={inputClass}
+                      style={{ flex: 1, marginTop: 0 }}
+                      value={form.glow || ""}
+                      onChange={e => setField("glow", e.target.value)}
+                      placeholder="#34d399"
+                    />
+                  </div>
+                </div>
                 <F label="Accent Classes" value={form.accent} onChange={v => setField("accent", v)} placeholder="from-emerald-400 to-cyan-400" />
                 <F label="Power Statement" value={form.power} onChange={v => setField("power", v)} className="col-span-2" />
-                <F label="Order" type="number" value={form.order} onChange={v => setField("order", v)} />
-                <div className="flex items-center gap-2 mt-6">
+                <div className="flex items-center gap-2 pt-4">
                   <input type="checkbox" checked={form.isActive} onChange={e => setField("isActive", e.target.checked)} className="rounded" id="isActiveMember" />
                   <label htmlFor="isActiveMember" className="text-sm">Active</label>
                 </div>
@@ -226,12 +320,27 @@ export function PortfolioTeamPage() {
 
               {/* Skills */}
               <Arr label="Skills" items={form.skills} onAdd={() => addItem("skills", { name: "", level: 80 })} onRemove={i => removeItem("skills", i)}
-                renderItem={(item, i) => (
-                  <div className="flex gap-2">
-                    <input className={inputClass} placeholder="Skill name" value={item.name} onChange={e => updateItem("skills", i, "name", e.target.value)} />
-                    <input className={inputClass} type="number" min="0" max="100" placeholder="Level" value={item.level} onChange={e => updateItem("skills", i, "level", Number(e.target.value))} style={{ width: 90 }} />
-                  </div>
-                )} />
+                renderItem={(item, i) => {
+                  const usedNames = form.skills.map((s, idx) => idx !== i ? s.name : null).filter(Boolean);
+                  const availableOptions = techStackOptions.filter(n => !usedNames.includes(n) || n === item.name);
+                  return (
+                    <div className="flex gap-2">
+                      <select
+                        className={inputClass}
+                        value={item.name}
+                        onChange={e => updateItem("skills", i, "name", e.target.value)}
+                        style={{ flex: 1 }}
+                      >
+                        <option value="">Select tech stack...</option>
+                        {availableOptions.map(n => <option key={n} value={n}>{n}</option>)}
+                        {item.name && !techStackOptions.includes(item.name) && (
+                          <option value={item.name}>{item.name}</option>
+                        )}
+                      </select>
+                      <input className={inputClass} type="number" min="0" max="100" placeholder="Level" value={item.level} onChange={e => updateItem("skills", i, "level", Number(e.target.value))} style={{ width: 90, marginTop: 0 }} />
+                    </div>
+                  );
+                }} />
 
               {/* Experience */}
               <Arr label="Experience" items={form.experience} onAdd={() => addItem("experience", { period: "", role: "", company: "", desc: "" })} onRemove={i => removeItem("experience", i)}

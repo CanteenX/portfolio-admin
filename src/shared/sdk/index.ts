@@ -23,3 +23,4 @@ export * from "./portfolio-projects";
 export * from "./portfolio-team";
 export * from "./portfolio-settings";
 export * from "./portfolio-contacts";
+export * from "./portfolio-masters";

@@ -67,6 +67,8 @@ const PortfolioProjectsPage = React.lazy(() => import("../modules/deep/portfolio
 const PortfolioTeamPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioTeamPage").then(m => ({ default: m.PortfolioTeamPage })));
 const PortfolioSettingsPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioSettingsPage").then(m => ({ default: m.PortfolioSettingsPage })));
 const PortfolioContactsPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioContactsPage").then(m => ({ default: m.PortfolioContactsPage })));
+const PortfolioMastersPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioMastersPage").then(m => ({ default: m.PortfolioMastersPage })));
+const PortfolioTechStackPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioTechStackPage").then(m => ({ default: m.PortfolioTechStackPage })));
 
 // RBAC pages
 const RbacMenuMasterPage = React.lazy(() => import("../modules/rbac/MenuMasterPage"));
@@ -143,6 +145,9 @@ function AuthenticatedRoutes() {
               <Route path="/portfolio/team" element={<PortfolioTeamPage />} />
               <Route path="/portfolio/settings" element={<PortfolioSettingsPage />} />
               <Route path="/portfolio/contacts" element={<PortfolioContactsPage />} />
+              {/* Portfolio Masters */}
+              <Route path="/portfolio/projects/masters" element={<PortfolioMastersPage />} />
+              <Route path="/portfolio/masters/tech-stacks" element={<PortfolioTechStackPage />} />
               {/* Charts */}
               <Route path="/charts/apex" element={<ApexChartsPage />} />
               <Route path="/charts/chartjs" element={<ChartjsPage />} />
