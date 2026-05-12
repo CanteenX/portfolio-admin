@@ -1,5 +1,12 @@
 import type { AxiosInstance } from "axios";
 
+export type RoiItem = {
+  value: string;
+  label: string;
+  description: string;
+  icon: string;
+};
+
 export type PortfolioProject = {
   _id: string;
   slug: string;
@@ -19,7 +26,11 @@ export type PortfolioProject = {
   solution: string;
   features: { title: string; description: string }[];
   gallery: { src: string; caption: string }[];
-  roi: string[];
+  roi: RoiItem[];
+  roiSectionDescription: string;
+  screens: { label: string; caption: string; description: string; image: string }[];
+  workflowSteps: { step: string; title: string; description: string }[];
+  stackSectionDescription: string;
   codeSnippet?: { language: string; label: string; code: string };
   architecture: string;
   isActive: boolean;

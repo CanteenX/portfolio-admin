@@ -5,8 +5,7 @@ import {
   createPortfolioMember,
   updatePortfolioMember,
   deletePortfolioMember,
-  uploadPortfolioImage,
-  listTechStacks
+  uploadPortfolioImage
 } from "../../../shared/sdk";
 
 const API_URL = process.env.REACT_APP_API_URL ?? "http://localhost:7002";
@@ -51,12 +50,12 @@ function AvatarUploadField({ value, onChange, api }) {
 
   return (
     <div>
-      <label className={labelClass}>Avatar Image</label>
+      <label className={labelClass}>Avatar Photo</label>
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       <div className="mt-1 flex items-center gap-3 flex-wrap">
         {value && (
           <div className="relative group">
-            <img src={imgSrc(value)} alt="avatar" className="w-12 h-12 object-cover rounded-full border border-border" />
+            <img src={imgSrc(value)} alt="avatar" className="w-14 h-14 object-cover rounded-full border border-border" />
             <button
               type="button"
               onClick={() => onChange("")}
@@ -70,7 +69,7 @@ function AvatarUploadField({ value, onChange, api }) {
           disabled={uploading}
           className="px-3 py-2 rounded-lg border border-border text-sm hover:bg-muted disabled:opacity-50"
         >
-          {uploading ? "Uploading..." : value ? "Replace" : "Choose Photo"}
+          {uploading ? "Uploading..." : value ? "Replace Photo" : "Choose Photo"}
         </button>
         {uploadErr && <span className="text-xs text-red-400">{uploadErr}</span>}
       </div>
@@ -78,12 +77,13 @@ function AvatarUploadField({ value, onChange, api }) {
   );
 }
 
+function toSlug(name) {
+  return name.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
+}
+
 const EMPTY_FORM = {
-  id: "", slug: "", name: "", role: "", avatar: "", glow: "#ffffff",
-  accent: "from-white to-gray-400", power: "", bio: "",
-  personal: { location: "", email: "", languages: [] },
-  skills: [], education: [], experience: [], projects: [], certificates: [],
-  socials: { github: "", linkedin: "", portfolio: "" },
+  slug: "", name: "", role: "", avatar: "", power: "",
+  socials: { github: "", linkedin: "" },
   isActive: true, order: 0
 };
 
@@ -98,12 +98,8 @@ export function PortfolioTeamPage() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
-  const [techStackOptions, setTechStackOptions] = useState([]);
+  const [slugManual, setSlugManual] = useState(false);
   const LIMIT = 20;
-
-  useEffect(() => {
-    listTechStacks(api).then(ts => setTechStackOptions(ts.map(t => t.name))).catch(() => {});
-  }, [api]);
 
   async function loadData(p = 1) {
     setLoading(true);
@@ -121,22 +117,42 @@ export function PortfolioTeamPage() {
 
   useEffect(() => { loadData(page); }, [page, api]);
 
-  function openCreate() { setEditing(null); setForm(EMPTY_FORM); setShowModal(true); }
+  function openCreate() {
+    setEditing(null);
+    setForm(EMPTY_FORM);
+    setSlugManual(false);
+    setShowModal(true);
+  }
 
   function openEdit(item) {
     setEditing(item);
+    setSlugManual(true);
     setForm({
-      id: item.id, slug: item.slug, name: item.name, role: item.role,
-      avatar: item.avatar, glow: item.glow, accent: item.accent,
-      power: item.power, bio: item.bio,
-      personal: item.personal ?? { location: "", email: "", languages: [] },
-      skills: item.skills ?? [], education: item.education ?? [],
-      experience: item.experience ?? [], projects: item.projects ?? [],
-      certificates: item.certificates ?? [],
-      socials: item.socials ?? { github: "", linkedin: "", portfolio: "" },
-      isActive: item.isActive, order: item.order
+      slug: item.slug ?? "",
+      name: item.name ?? "",
+      role: item.role ?? "",
+      avatar: item.avatar ?? "",
+      power: item.power ?? "",
+      socials: {
+        github: item.socials?.github ?? "",
+        linkedin: item.socials?.linkedin ?? ""
+      },
+      isActive: item.isActive,
+      order: item.order ?? 0
     });
     setShowModal(true);
+  }
+
+  function setField(key, value) {
+    setForm(prev => {
+      const next = { ...prev, [key]: value };
+      if (key === "name" && !slugManual) next.slug = toSlug(value);
+      return next;
+    });
+  }
+
+  function setSocials(key, value) {
+    setForm(prev => ({ ...prev, socials: { ...prev.socials, [key]: value } }));
   }
 
   async function handleSave(e) {
@@ -144,16 +160,7 @@ export function PortfolioTeamPage() {
     setSaving(true);
     setError(null);
     try {
-      const payload = {
-        ...form,
-        personal: {
-          ...form.personal,
-          languages: typeof form.personal.languages === "string"
-            ? form.personal.languages.split(",").map(s => s.trim()).filter(Boolean)
-            : form.personal.languages
-        },
-        order: Number(form.order) || 0
-      };
+      const payload = { ...form, order: Number(form.order) || 0 };
       if (editing) await updatePortfolioMember(api, editing._id, payload);
       else await createPortfolioMember(api, payload);
       setShowModal(false);
@@ -173,16 +180,6 @@ export function PortfolioTeamPage() {
     } catch (e) {
       setError(e?.response?.data?.message ?? "Delete failed");
     }
-  }
-
-  function setField(key, value) { setForm(prev => ({ ...prev, [key]: value })); }
-  function setPersonal(key, value) { setForm(prev => ({ ...prev, personal: { ...prev.personal, [key]: value } })); }
-  function setSocials(key, value) { setForm(prev => ({ ...prev, socials: { ...prev.socials, [key]: value } })); }
-
-  function addItem(key, template) { setForm(prev => ({ ...prev, [key]: [...(prev[key] ?? []), template] })); }
-  function removeItem(key, idx) { setForm(prev => ({ ...prev, [key]: prev[key].filter((_, i) => i !== idx) })); }
-  function updateItem(key, idx, subKey, value) {
-    setForm(prev => ({ ...prev, [key]: prev[key].map((item, i) => i === idx ? { ...item, [subKey]: value } : item) }));
   }
 
   const totalPages = Math.ceil(total / LIMIT);
@@ -208,7 +205,7 @@ export function PortfolioTeamPage() {
             <tr>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Member</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Role</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">ID</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Order</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
               <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
             </tr>
@@ -222,7 +219,10 @@ export function PortfolioTeamPage() {
               <tr key={item._id} className="border-b border-border hover:bg-muted/20 transition-colors">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    {item.avatar && <img src={imgSrc(item.avatar)} alt={item.name} className="w-8 h-8 rounded-full object-cover" />}
+                    {item.avatar
+                      ? <img src={imgSrc(item.avatar)} alt={item.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                      : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground shrink-0">{item.name?.[0]}</div>
+                    }
                     <div>
                       <div className="font-medium">{item.name}</div>
                       <div className="text-xs text-muted-foreground font-mono">{item.slug}</div>
@@ -230,7 +230,7 @@ export function PortfolioTeamPage() {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{item.role}</td>
-                <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{item.id}</td>
+                <td className="px-4 py-3 text-muted-foreground">{item.order}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.isActive ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
                     {item.isActive ? "Active" : "Hidden"}
@@ -258,120 +258,83 @@ export function PortfolioTeamPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
-          <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-3xl my-8">
+          <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-lg my-8">
             <div className="flex items-center justify-between p-6 border-b border-border">
               <h2 className="text-lg font-semibold">{editing ? "Edit Member" : "New Team Member"}</h2>
               <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground text-xl leading-none">×</button>
             </div>
 
-            <form onSubmit={handleSave} className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
-                <F label="ID *" value={form.id} onChange={v => setField("id", v)} required placeholder="FC-001" />
-                <F label="Slug *" value={form.slug} onChange={v => setField("slug", v)} required placeholder="priya-raman" />
-                <F label="Name *" value={form.name} onChange={v => setField("name", v)} required />
-                <F label="Role *" value={form.role} onChange={v => setField("role", v)} required />
-              </div>
+            <form onSubmit={handleSave} className="p-6 space-y-5">
 
+              {/* Avatar */}
               <AvatarUploadField value={form.avatar} onChange={v => setField("avatar", v)} api={api} />
 
+              {/* Name & Slug */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Glow Color</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={form.glow || "#ffffff"}
-                      onChange={e => setField("glow", e.target.value)}
-                      className="w-10 h-10 cursor-pointer rounded border border-border bg-transparent p-0.5"
-                    />
-                    <input
-                      className={inputClass}
-                      style={{ flex: 1, marginTop: 0 }}
-                      value={form.glow || ""}
-                      onChange={e => setField("glow", e.target.value)}
-                      placeholder="#34d399"
-                    />
-                  </div>
+                  <label className={labelClass}>Name *</label>
+                  <input
+                    className={inputClass}
+                    required
+                    value={form.name}
+                    onChange={e => { setSlugManual(false); setField("name", e.target.value); }}
+                    placeholder="Krish Modi"
+                  />
                 </div>
-                <F label="Accent Classes" value={form.accent} onChange={v => setField("accent", v)} placeholder="from-emerald-400 to-cyan-400" />
-                <F label="Power Statement" value={form.power} onChange={v => setField("power", v)} className="col-span-2" />
-                <div className="flex items-center gap-2 pt-4">
-                  <input type="checkbox" checked={form.isActive} onChange={e => setField("isActive", e.target.checked)} className="rounded" id="isActiveMember" />
-                  <label htmlFor="isActiveMember" className="text-sm">Active</label>
-                </div>
-              </div>
-
-              <TA label="Bio" value={form.bio} onChange={v => setField("bio", v)} rows={3} />
-
-              <div className="grid grid-cols-3 gap-4">
-                <F label="Location" value={form.personal.location} onChange={v => setPersonal("location", v)} />
-                <F label="Email" value={form.personal.email} onChange={v => setPersonal("email", v)} />
                 <div>
-                  <label className={labelClass}>Languages (comma-sep)</label>
-                  <input className={inputClass} value={Array.isArray(form.personal.languages) ? form.personal.languages.join(", ") : form.personal.languages} onChange={e => setPersonal("languages", e.target.value)} placeholder="English, Hindi" />
+                  <label className={labelClass}>
+                    Slug *
+                    {!slugManual && <span className="ml-2 text-emerald-500 normal-case font-normal">auto</span>}
+                  </label>
+                  <input
+                    className={inputClass}
+                    required
+                    value={form.slug}
+                    onChange={e => { setSlugManual(true); setField("slug", e.target.value); }}
+                    placeholder="krish-modi"
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <F label="GitHub URL" value={form.socials.github} onChange={v => setSocials("github", v)} />
-                <F label="LinkedIn URL" value={form.socials.linkedin} onChange={v => setSocials("linkedin", v)} />
-                <F label="Portfolio URL" value={form.socials.portfolio} onChange={v => setSocials("portfolio", v)} />
+              {/* Role */}
+              <div>
+                <label className={labelClass}>Role *</label>
+                <input className={inputClass} required value={form.role} onChange={e => setField("role", e.target.value)} placeholder="Backend / Cloud Lead" />
               </div>
 
-              {/* Skills */}
-              <Arr label="Skills" items={form.skills} onAdd={() => addItem("skills", { name: "", level: 80 })} onRemove={i => removeItem("skills", i)}
-                renderItem={(item, i) => {
-                  const usedNames = form.skills.map((s, idx) => idx !== i ? s.name : null).filter(Boolean);
-                  const availableOptions = techStackOptions.filter(n => !usedNames.includes(n) || n === item.name);
-                  return (
-                    <div className="flex gap-2">
-                      <select
-                        className={inputClass}
-                        value={item.name}
-                        onChange={e => updateItem("skills", i, "name", e.target.value)}
-                        style={{ flex: 1 }}
-                      >
-                        <option value="">Select tech stack...</option>
-                        {availableOptions.map(n => <option key={n} value={n}>{n}</option>)}
-                        {item.name && !techStackOptions.includes(item.name) && (
-                          <option value={item.name}>{item.name}</option>
-                        )}
-                      </select>
-                      <input className={inputClass} type="number" min="0" max="100" placeholder="Level" value={item.level} onChange={e => updateItem("skills", i, "level", Number(e.target.value))} style={{ width: 90, marginTop: 0 }} />
-                    </div>
-                  );
-                }} />
+              {/* Power tagline */}
+              <div>
+                <label className={labelClass}>Tagline</label>
+                <input className={inputClass} value={form.power} onChange={e => setField("power", e.target.value)} placeholder="Designs distributed systems that don't fall over at peak traffic." />
+              </div>
 
-              {/* Experience */}
-              <Arr label="Experience" items={form.experience} onAdd={() => addItem("experience", { period: "", role: "", company: "", desc: "" })} onRemove={i => removeItem("experience", i)}
-                renderItem={(item, i) => (
-                  <div className="grid grid-cols-2 gap-2">
-                    <input className={inputClass} placeholder="Period" value={item.period} onChange={e => updateItem("experience", i, "period", e.target.value)} />
-                    <input className={inputClass} placeholder="Role" value={item.role} onChange={e => updateItem("experience", i, "role", e.target.value)} />
-                    <input className={inputClass} placeholder="Company" value={item.company} onChange={e => updateItem("experience", i, "company", e.target.value)} />
-                    <input className={inputClass} placeholder="Description" value={item.desc} onChange={e => updateItem("experience", i, "desc", e.target.value)} />
-                  </div>
-                )} />
+              {/* Socials */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>LinkedIn URL</label>
+                  <input className={inputClass} type="url" value={form.socials.linkedin} onChange={e => setSocials("linkedin", e.target.value)} placeholder="https://linkedin.com/in/..." />
+                </div>
+                <div>
+                  <label className={labelClass}>GitHub URL</label>
+                  <input className={inputClass} type="url" value={form.socials.github} onChange={e => setSocials("github", e.target.value)} placeholder="https://github.com/..." />
+                </div>
+              </div>
 
-              {/* Education */}
-              <Arr label="Education" items={form.education} onAdd={() => addItem("education", { year: "", degree: "", school: "" })} onRemove={i => removeItem("education", i)}
-                renderItem={(item, i) => (
-                  <div className="grid grid-cols-3 gap-2">
-                    <input className={inputClass} placeholder="Year" value={item.year} onChange={e => updateItem("education", i, "year", e.target.value)} />
-                    <input className={inputClass} placeholder="Degree" value={item.degree} onChange={e => updateItem("education", i, "degree", e.target.value)} />
-                    <input className={inputClass} placeholder="School" value={item.school} onChange={e => updateItem("education", i, "school", e.target.value)} />
-                  </div>
-                )} />
-
-              {/* Certificates */}
-              <Arr label="Certificates" items={form.certificates} onAdd={() => addItem("certificates", { title: "" })} onRemove={i => removeItem("certificates", i)}
-                renderItem={(item, i) => (
-                  <input className={inputClass} placeholder="Certificate title" value={item.title} onChange={e => updateItem("certificates", i, "title", e.target.value)} />
-                )} />
+              {/* Order & Active */}
+              <div className="grid grid-cols-2 gap-4 items-end">
+                <div>
+                  <label className={labelClass}>Display Order</label>
+                  <input type="number" className={inputClass} value={form.order} onChange={e => setField("order", e.target.value)} />
+                </div>
+                <div className="flex items-center gap-2 pb-2">
+                  <input type="checkbox" id="isActiveMember" checked={form.isActive} onChange={e => setField("isActive", e.target.checked)} className="rounded" />
+                  <label htmlFor="isActiveMember" className="text-sm">Active (visible on site)</label>
+                </div>
+              </div>
 
               {error && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-sm">{error}</div>}
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-1">
                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-muted">Cancel</button>
                 <button type="submit" disabled={saving} className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 hover:opacity-90">
                   {saving ? "Saving..." : editing ? "Save Changes" : "Create Member"}
@@ -387,40 +350,3 @@ export function PortfolioTeamPage() {
 
 const inputClass = "mt-1 w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary transition-all";
 const labelClass = "text-xs font-medium text-muted-foreground uppercase tracking-wider";
-
-function F({ label, value, onChange, className = "", type = "text", required = false, placeholder = "" }) {
-  return (
-    <div className={className}>
-      <label className={labelClass}>{label}</label>
-      <input type={type} className={inputClass} value={value ?? ""} onChange={e => onChange(e.target.value)} required={required} placeholder={placeholder} />
-    </div>
-  );
-}
-
-function TA({ label, value, onChange, rows = 3 }) {
-  return (
-    <div>
-      <label className={labelClass}>{label}</label>
-      <textarea className={`${inputClass} resize-none`} rows={rows} value={value ?? ""} onChange={e => onChange(e.target.value)} />
-    </div>
-  );
-}
-
-function Arr({ label, items, onAdd, onRemove, renderItem }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <label className={labelClass}>{label}</label>
-        <button type="button" onClick={onAdd} className="text-xs text-primary hover:opacity-80">+ Add</button>
-      </div>
-      <div className="space-y-2">
-        {(items ?? []).map((item, i) => (
-          <div key={i} className="flex items-start gap-2">
-            <div className="flex-1">{renderItem(item, i)}</div>
-            <button type="button" onClick={() => onRemove(i)} className="mt-1 text-red-400 hover:text-red-300 text-lg leading-none flex-shrink-0">×</button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
