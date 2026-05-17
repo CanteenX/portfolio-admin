@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "create-react-app",
+  "buildCommand": "pnpm build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "outputDirectory": "build",
+  "rewrites": [
+    { "source": "/admin/static/(.*)", "destination": "/static/$1" },
+    { "source": "/admin/manifest.json", "destination": "/manifest.json" },
+    { "source": "/admin/asset-manifest.json", "destination": "/asset-manifest.json" },
+    { "source": "/admin/favicon.svg", "destination": "/favicon.svg" },
+    { "source": "/admin/favicon.ico", "destination": "/favicon.ico" },
+    { "source": "/admin/robots.txt", "destination": "/robots.txt" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/admin/(.*)", "destination": "/index.html" }
+  ]
+}

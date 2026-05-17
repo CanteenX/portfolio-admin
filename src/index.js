@@ -23,9 +23,11 @@ if (!rootElement) {
   throw new Error("Missing root container");
 }
 
+const ROUTER_BASENAME = process.env.PUBLIC_URL || "";
+
 createRoot(rootElement).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={ROUTER_BASENAME}>
       <ThemeProvider>
         <I18nProvider>
           <AuthProvider>

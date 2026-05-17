@@ -2,6 +2,7 @@
   "name": "admin-panel-classic",
   "version": "0.1.0",
   "private": true,
+  "homepage": "/admin",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=22 <23"

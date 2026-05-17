@@ -126,9 +126,6 @@ export function LoginPage() {
               )}
             </Button>
           </form>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            Seed users available when backend <code className="font-mono text-primary">ENABLE_SEED=true</code>
-          </p>
         </CardContent>
       </Card>
     </div>

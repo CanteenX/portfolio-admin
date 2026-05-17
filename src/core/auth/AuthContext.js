@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { createApiClient, getSessionBootstrap, login as loginRequest } from "@admin-platform/shared-sdk";
 
 const TOKEN_KEY = "admin_platform_token";
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:7002";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ?? "http://localhost:7002";
 
 const AuthContext = createContext(null);
 
