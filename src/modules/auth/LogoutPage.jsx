@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { useAuth } from "../../core/auth/AuthContext";
 import { CoverAuthLayout } from "./CoverAuthLayout";
 import { Button } from "../../components/ui/button";
 import { LogOut } from "lucide-react";

@@ -5,7 +5,7 @@
   "homepage": "/admin",
   "packageManager": "pnpm@9.15.0",
   "engines": {
-    "node": ">=22 <23"
+    "node": ">=22"
   },
   "scripts": {
     "dev": "craco start",

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { createApiClient, getSessionBootstrap, login as loginRequest } from "@admin-platform/shared-sdk";
+import { createApiClient, getSessionBootstrap, login as loginRequest, setUnauthorizedHandler } from "@admin-platform/shared-sdk";
 
 const TOKEN_KEY = "admin_platform_token";
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ?? "http://localhost:7002";
@@ -68,15 +68,19 @@ export function AuthProvider({ children }) {
     [api]
   );
 
+  // One effect, not two. refreshSession is a useCallback keyed on token, so the
+  // previous pair both re-ran on every token change and fired two concurrent
+  // bootstrap requests that raced to setSession.
   useEffect(() => {
     refreshSession();
   }, [refreshSession]);
 
+  // A 401 from any request means the token is gone or expired; drop the session
+  // so the app falls back to the login screen instead of failing silently.
   useEffect(() => {
-    if (token) {
-      refreshSession();
-    }
-  }, [token, refreshSession]);
+    setUnauthorizedHandler(() => logout());
+    return () => setUnauthorizedHandler(null);
+  }, [logout]);
 
   const value = useMemo(
     () => ({
