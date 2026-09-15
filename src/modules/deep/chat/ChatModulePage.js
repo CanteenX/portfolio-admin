@@ -72,46 +72,34 @@ export function ChatModulePage() {
     }
   }, [selectedConversationId]);
 
-  // SSE: subscribe to real-time events when a conversation is expanded
+  // Polling, not SSE.
+  //
+  // The server stream cannot work on the serverless deployment: its client
+  // registry is per-instance, so a POST handled by another instance never
+  // reaches this connection, and the platform kills the request at 30s — right
+  // as the first heartbeat is due. Re-reading the conversation on an interval
+  // is less elegant and actually delivers.
   useEffect(() => {
-    if (!selectedConversationId || !token) return;
+    if (!selectedConversationId) return;
 
-    const baseUrl = (api.defaults.baseURL ?? "").replace(/\/$/, "");
-    // SECURITY NOTE: JWT in URL query string is visible in server logs and browser history. Acceptable for internal admin panel; for public-facing apps, use cookie-based auth or a short-lived token exchange.
-    const url = `${baseUrl}/api/v1/chat/conversations/${selectedConversationId}/stream?token=${encodeURIComponent(token)}`;
-    const eventSource = new EventSource(url);
-
-    eventSource.addEventListener("message", (e) => {
-      try {
-        const incoming = JSON.parse(e.data);
-        setMessages((prev) => [incoming, ...prev]);
-      } catch { /* ignore */ }
-    });
-
-    eventSource.addEventListener("message_edited", (e) => {
-      try {
-        const updated = JSON.parse(e.data);
-        setMessages((prev) =>
-          prev.map((m) => (m._id === updated._id || m.messageId === updated._id ? updated : m))
-        );
-      } catch { /* ignore */ }
-    });
-
-    eventSource.addEventListener("message_deleted", (e) => {
-      try {
-        const { _id } = JSON.parse(e.data);
-        setMessages((prev) => prev.filter((m) => m._id !== _id && m.messageId !== _id));
-      } catch { /* ignore */ }
-    });
-
-    eventSource.addEventListener("error", () => {
-      eventSource.close();
-    });
+    let cancelled = false;
+    const interval = setInterval(() => {
+      if (document.hidden) return; // no point polling a background tab
+      listChatMessages(api, { conversationId: selectedConversationId, page: 1, limit: 100 })
+        .then((result) => {
+          if (!cancelled) setMessages(result.items);
+        })
+        .catch(() => {
+          // A failed poll is not worth surfacing: the next one is 4s away, and
+          // the user is already looking at the last good state.
+        });
+    }, 4000);
 
     return () => {
-      eventSource.close();
+      cancelled = true;
+      clearInterval(interval);
     };
-  }, [selectedConversationId, token, api]);
+  }, [selectedConversationId, api]);
 
   async function handleCreate(e) {
     e.preventDefault();
