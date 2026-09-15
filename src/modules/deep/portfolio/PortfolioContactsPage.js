@@ -112,8 +112,15 @@ export function PortfolioContactsPage() {
             </div>
 
             <div className="space-y-1 text-sm">
+              {selected.phone && <div><span className="text-muted-foreground">Phone:</span> <a href={`tel:${selected.phone}`} className="text-primary hover:underline">{selected.phone}</a></div>}
+              {selected.company && <div><span className="text-muted-foreground">Company:</span> {selected.company}</div>}
               {selected.service && <div><span className="text-muted-foreground">Service:</span> {selected.service}</div>}
+              {selected.budgetBand && <div><span className="text-muted-foreground">Budget:</span> {selected.budgetBand}</div>}
+              {selected.timeline && <div><span className="text-muted-foreground">Timeline:</span> {selected.timeline}</div>}
               {selected.callSlot && <div><span className="text-muted-foreground">Call Slot:</span> {selected.callSlot}</div>}
+              {selected.referrer && <div><span className="text-muted-foreground">Referrer:</span> <span className="break-all">{selected.referrer}</span></div>}
+              {selected.utmSource && <div><span className="text-muted-foreground">Campaign:</span> {[selected.utmSource, selected.utmMedium, selected.utmCampaign].filter(Boolean).join(" / ")}</div>}
+              {selected.consentAt && <div><span className="text-muted-foreground">Consent given:</span> {new Date(selected.consentAt).toLocaleString()}</div>}
               <div><span className="text-muted-foreground">Received:</span> {new Date(selected.createdAt).toLocaleString()}</div>
             </div>
 
@@ -123,7 +130,7 @@ export function PortfolioContactsPage() {
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-2">Update Status</label>
               <div className="flex gap-2">
                 {STATUS_OPTIONS.map(s => (
-                  <RbacGate action="edit"><button key={s} onClick={() => handleStatusChange(selected._id, s)} className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${selected.status === s ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
+                  <RbacGate key={s} action="edit"><button onClick={() => handleStatusChange(selected._id, s)} className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${selected.status === s ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
                     {s.charAt(0).toUpperCase() + s.slice(1)}
                   </button></RbacGate>
                 ))}

@@ -4,8 +4,18 @@ export type PortfolioContact = {
   _id: string;
   name: string;
   email: string;
+  phone?: string;
+  company?: string;
   service: string;
+  budgetBand?: string;
+  timeline?: string;
   callSlot: string;
+  referrer?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  consentText?: string;
+  consentAt?: string | null;
   message: string;
   status: "new" | "read" | "replied";
   createdAt: string;
