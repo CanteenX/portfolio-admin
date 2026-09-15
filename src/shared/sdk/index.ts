@@ -1,4 +1,5 @@
 export * from "./client";
+export * from "./seo";
 export * from "./api-management";
 export * from "./menu";
 export * from "./permission-matrix";

@@ -73,6 +73,7 @@ const PortfolioTechStackPage = React.lazy(() => import("../modules/deep/portfoli
 
 // RBAC pages
 const RbacMenuMasterPage = React.lazy(() => import("../modules/rbac/MenuMasterPage"));
+const SeoManagerPage = lazy(() => import("../modules/deep/website/SeoManagerPage"));
 const RbacActionTypePage = React.lazy(() => import("../modules/rbac/ActionTypePage"));
 const RbacRoleMasterPage = React.lazy(() => import("../modules/rbac/RoleMasterPage"));
 const RbacRoleEditPage = React.lazy(() => import("../modules/rbac/RoleEditPage"));
@@ -114,6 +115,8 @@ function AuthenticatedRoutes() {
               <Route path="/settings/users" element={<UserManagementPage />} />
               <Route path="/settings/menu-management" element={<MenuManagementPage />} />
               {/* RBAC */}
+              {/* Must match the menuUrl requireRbacPermission guards on. */}
+              <Route path="/website/seo-manager" element={<SeoManagerPage />} />
               <Route path="/rbac/menus" element={<RbacMenuMasterPage />} />
               <Route path="/rbac/actions" element={<RbacActionTypePage />} />
               <Route path="/rbac/roles" element={<RbacRoleMasterPage />} />
