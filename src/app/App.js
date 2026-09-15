@@ -73,7 +73,7 @@ const PortfolioTechStackPage = React.lazy(() => import("../modules/deep/portfoli
 
 // RBAC pages
 const RbacMenuMasterPage = React.lazy(() => import("../modules/rbac/MenuMasterPage"));
-const SeoManagerPage = lazy(() => import("../modules/deep/website/SeoManagerPage"));
+const SeoManagerPage = React.lazy(() => import("../modules/deep/website/SeoManagerPage"));
 const RbacActionTypePage = React.lazy(() => import("../modules/rbac/ActionTypePage"));
 const RbacRoleMasterPage = React.lazy(() => import("../modules/rbac/RoleMasterPage"));
 const RbacRoleEditPage = React.lazy(() => import("../modules/rbac/RoleEditPage"));
