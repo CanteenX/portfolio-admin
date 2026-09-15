@@ -1,3 +1,4 @@
+import { RbacGate } from "../../../components/common/RequirePermission";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../../core/auth/AuthContext";
 import { listPortfolioContacts, updateContactStatus } from "../../../shared/sdk";
@@ -122,9 +123,9 @@ export function PortfolioContactsPage() {
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-2">Update Status</label>
               <div className="flex gap-2">
                 {STATUS_OPTIONS.map(s => (
-                  <button key={s} onClick={() => handleStatusChange(selected._id, s)} className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${selected.status === s ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
+                  <RbacGate action="edit"><button key={s} onClick={() => handleStatusChange(selected._id, s)} className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${selected.status === s ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
                     {s.charAt(0).toUpperCase() + s.slice(1)}
-                  </button>
+                  </button></RbacGate>
                 ))}
               </div>
             </div>

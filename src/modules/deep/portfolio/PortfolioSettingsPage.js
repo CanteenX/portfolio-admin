@@ -1,3 +1,4 @@
+import { RbacGate } from "../../../components/common/RequirePermission";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../../core/auth/AuthContext";
 import { getPortfolioSettings, updatePortfolioSettings } from "../../../shared/sdk";
@@ -297,9 +298,9 @@ export function PortfolioSettingsPage() {
             <input type="checkbox" id="isActiveSetting" checked={form.isActive} onChange={e => setForm(prev => ({ ...prev, isActive: e.target.checked }))} className="rounded" />
             <label htmlFor="isActiveSetting" className="text-sm text-muted-foreground">Settings active</label>
           </div>
-          <button type="submit" disabled={saving} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium disabled:opacity-50 hover:opacity-90 transition-opacity">
+          <RbacGate action="edit"><button type="submit" disabled={saving} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium disabled:opacity-50 hover:opacity-90 transition-opacity">
             {saving ? "Saving..." : "Save All Settings"}
-          </button>
+          </button></RbacGate>
         </div>
       </form>
     </div>

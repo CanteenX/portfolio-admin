@@ -1,3 +1,4 @@
+import { RbacGate } from "../../../components/common/RequirePermission";
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../../core/auth/AuthContext";
 import {
@@ -192,9 +193,9 @@ export function PortfolioTeamPage() {
           <h1 className="text-2xl font-bold">Team Members</h1>
           <p className="text-sm text-gray-500 mt-1">{total} member{total !== 1 ? "s" : ""} total</p>
         </div>
-        <button onClick={openCreate} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90">
+        <RbacGate action="write"><button onClick={openCreate} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90">
           + Add Member
-        </button>
+        </button></RbacGate>
       </div>
 
       {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">{error}</div>}
@@ -237,8 +238,8 @@ export function PortfolioTeamPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button onClick={() => openEdit(item)} className="text-xs text-blue-400 hover:text-blue-300 mr-3">Edit</button>
-                  <button onClick={() => handleDelete(item._id)} className="text-xs text-red-400 hover:text-red-300">Delete</button>
+                  <RbacGate action="edit"><button onClick={() => openEdit(item)} className="text-xs text-blue-400 hover:text-blue-300 mr-3">Edit</button></RbacGate>
+                  <RbacGate action="delete"><button onClick={() => handleDelete(item._id)} className="text-xs text-red-400 hover:text-red-300">Delete</button></RbacGate>
                 </td>
               </tr>
             ))}

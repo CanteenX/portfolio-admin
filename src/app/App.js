@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "../core/auth/AuthContext";
+import { PermissionProtected } from "../core/router/PermissionProtected";
 import { FeatureFlagProvider } from "../core/feature-flags/FeatureFlagContext";
 import { MenuProvider } from "../core/menu/MenuContext";
 import { LayoutProvider } from "../core/layout/LayoutContext";
@@ -98,7 +99,8 @@ function AuthenticatedRoutes() {
           <ScrollToTop />
           <AppLayout>
             <Suspense fallback={<LazyFallback />}>
-            <Routes>
+            <PermissionProtected>
+              <Routes>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/payments/callback" element={<PaymentCallbackPage />} />
               {/* Settings */}
@@ -177,6 +179,7 @@ function AuthenticatedRoutes() {
               <Route path="/group/*" element={<Navigate to="/" replace />} />
               <Route path="*" element={<Error404Page />} />
             </Routes>
+              </PermissionProtected>
           </Suspense>
           </AppLayout>
         </LayoutProvider>
