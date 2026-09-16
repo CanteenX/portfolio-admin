@@ -5,7 +5,6 @@ import {
   createUser,
   updateUser,
   deleteUser,
-  getCustomRoles,
 } from "../../shared/sdk/system";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -48,7 +47,6 @@ import { Pencil, Trash2, Download, Plus, Loader2 } from "lucide-react";
 export default function UserManagementPage() {
   const { api } = useAuth();
   const [users, setUsers] = useState([]);
-  const [customRoles, setCustomRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -62,7 +60,7 @@ export default function UserManagementPage() {
   });
   const [formLoading, setFormLoading] = useState(false);
 
-  // Fetch users and custom roles
+  // Fetch users
   useEffect(() => {
     loadData();
   }, []);
@@ -71,12 +69,7 @@ export default function UserManagementPage() {
     try {
       setLoading(true);
       setError(null);
-      const [usersData, rolesData] = await Promise.all([
-        getUsers(api),
-        getCustomRoles(api),
-      ]);
-      setUsers(usersData);
-      setCustomRoles(rolesData);
+      setUsers(await getUsers(api));
     } catch (err) {
       setError(err.message || "Failed to load users");
     } finally {
@@ -110,7 +103,6 @@ export default function UserManagementPage() {
     total: users.length,
     superAdmins: users.filter((u) => u.role === "super_admin").length,
     admins: users.filter((u) => u.role === "admin").length,
-    withCustomRoles: users.filter((u) => u.customRoleId).length,
   };
 
   // Handle create user
@@ -185,9 +177,6 @@ export default function UserManagementPage() {
     const exportData = sortedData.map((user) => ({
       email: user.email,
       role: user.role,
-      customRole: user.customRoleId
-        ? customRoles.find((r) => r.id === user.customRoleId)?.name || "N/A"
-        : "N/A",
       createdAt: new Date(user.createdAt).toLocaleDateString(),
       updatedAt: new Date(user.updatedAt).toLocaleDateString(),
     }));
@@ -197,7 +186,6 @@ export default function UserManagementPage() {
       columns: [
         { header: "Email", key: "email" },
         { header: "Role", key: "role" },
-        { header: "Custom Role", key: "customRole" },
         { header: "Created", key: "createdAt" },
         { header: "Updated", key: "updatedAt" },
       ],
@@ -232,12 +220,6 @@ export default function UserManagementPage() {
     setSelectedUser(null);
   };
 
-  // Get custom role name by ID
-  const getCustomRoleName = (customRoleId) => {
-    const role = customRoles.find((r) => r.id === customRoleId);
-    return role ? role.name : "N/A";
-  };
-
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -258,7 +240,7 @@ export default function UserManagementPage() {
       )}
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="rounded-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
@@ -292,16 +274,6 @@ export default function UserManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              With Custom Roles
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.withCustomRoles}</div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Main Content */}
@@ -391,9 +363,6 @@ export default function UserManagementPage() {
                         direction={sortDirection}
                         onSort={handleSort}
                       />
-                      <TableHead className="font-bold uppercase tracking-wider">
-                        Custom Role
-                      </TableHead>
                       <SortableHeader
                         label="Created"
                         sortKey="createdAt"
@@ -410,7 +379,7 @@ export default function UserManagementPage() {
                     {paginatedData.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={6}
+                          colSpan={5}
                           className="text-center py-12 text-muted-foreground"
                         >
                           No users found
@@ -436,15 +405,6 @@ export default function UserManagementPage() {
                                 ? "Super Admin"
                                 : "Admin"}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {user.customRoleId ? (
-                              <Badge variant="outline" className="rounded-sm">
-                                {getCustomRoleName(user.customRoleId)}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">N/A</span>
-                            )}
                           </TableCell>
                           <TableCell>
                             {new Date(user.createdAt).toLocaleDateString()}

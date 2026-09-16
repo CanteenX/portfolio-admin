@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../core/auth/AuthContext";
+import { useRbacPagePermissions } from "../../components/common/RequirePermission";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { getBranding, updateBranding } from "@admin-platform/shared-sdk";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
@@ -10,7 +11,11 @@ import { Skeleton } from "../../components/ui/skeleton";
 import { Palette, Loader2, Check } from "lucide-react";
 
 export default function BrandingPage() {
-  const { api, session } = useAuth();
+  const { api } = useAuth();
+  // Branding is delegable: any admin granted `edit` on this screen may change
+  // it. Reading is open to admins, so a viewer without the grant still sees
+  // the current values — they just cannot save.
+  const { edit: canEdit } = useRbacPagePermissions();
   const [branding, setBranding] = useState(null);
   const [draft, setDraft] = useState(null);
   const [error, setError] = useState("");
@@ -26,9 +31,6 @@ export default function BrandingPage() {
       .finally(() => setLoading(false));
   }, [api]);
 
-  if (session?.user?.role !== "super_admin") {
-    return <div className="text-destructive p-6">Access denied. Super admin only.</div>;
-  }
   if (loading) return <div className="space-y-4 max-w-lg"><Skeleton className="h-10" /><Skeleton className="h-10" /><Skeleton className="h-10" /></div>;
   if (error) return <div className="text-destructive">{error}</div>;
   if (!draft || !branding) return null;
@@ -52,25 +54,30 @@ export default function BrandingPage() {
         <CardContent className="p-6 space-y-5">
           <div className="space-y-2">
             <Label className="uppercase tracking-wider text-xs font-bold">Company Name</Label>
-            <Input value={draft.companyName} onChange={(e) => setDraft({ ...draft, companyName: e.target.value })} />
+            <Input disabled={!canEdit} value={draft.companyName} onChange={(e) => setDraft({ ...draft, companyName: e.target.value })} />
           </div>
           <div className="space-y-2">
             <Label className="uppercase tracking-wider text-xs font-bold">Logo URL</Label>
-            <Input value={draft.logoUrl} onChange={(e) => setDraft({ ...draft, logoUrl: e.target.value })} placeholder="https://example.com/logo.png" />
+            <Input disabled={!canEdit} value={draft.logoUrl} onChange={(e) => setDraft({ ...draft, logoUrl: e.target.value })} placeholder="https://example.com/logo.png" />
             {draft.logoUrl && <img src={draft.logoUrl} alt="Logo preview" className="max-h-16 mt-2 rounded-sm border border-border" />}
           </div>
           <div className="space-y-2">
             <Label className="uppercase tracking-wider text-xs font-bold">Primary Color</Label>
             <div className="flex items-center gap-3">
-              <input type="color" value={draft.primaryColor} onChange={(e) => setDraft({ ...draft, primaryColor: e.target.value })} className="w-10 h-10 rounded-sm border border-border cursor-pointer" />
-              <Input value={draft.primaryColor} onChange={(e) => setDraft({ ...draft, primaryColor: e.target.value })} className="max-w-32 font-mono" />
+              <input disabled={!canEdit} type="color" value={draft.primaryColor} onChange={(e) => setDraft({ ...draft, primaryColor: e.target.value })} className="w-10 h-10 rounded-sm border border-border cursor-pointer" />
+              <Input disabled={!canEdit} value={draft.primaryColor} onChange={(e) => setDraft({ ...draft, primaryColor: e.target.value })} className="max-w-32 font-mono" />
             </div>
           </div>
           <div className="flex items-center gap-3 pt-2">
-            <Button onClick={handleSave} disabled={!hasChanges || saving} className="font-bold uppercase tracking-wider">
+            <Button onClick={handleSave} disabled={!canEdit || !hasChanges || saving} className="font-bold uppercase tracking-wider">
               {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : "Save"}
             </Button>
             {saved && <span className="text-sm text-success flex items-center gap-1"><Check className="w-4 h-4" /> Saved!</span>}
+            {!canEdit && (
+              <span className="text-sm text-muted-foreground">
+                View only — ask for edit access on Branding to make changes.
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>

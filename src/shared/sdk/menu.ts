@@ -1,7 +1,6 @@
 import type {
   MenuGroup,
   MenuItem,
-  MenuPermissionEntry,
   QuickLink,
 } from "@admin-platform/shared-types";
 import type { AxiosInstance } from "axios";
@@ -118,28 +117,6 @@ export async function reorderMenuItem(
   order: number
 ): Promise<void> {
   await api.patch(`/api/v1/menus/items/${id}/reorder`, { order });
-}
-
-// ── Structured Permissions ─────────────────────────────────────────
-
-export async function getRoleStructuredPermissions(
-  api: AxiosInstance,
-  roleId: string
-): Promise<MenuPermissionEntry[]> {
-  const response = await api.get<{ permissions: MenuPermissionEntry[] }>(
-    `/api/v1/system/custom-roles/${roleId}/permissions`
-  );
-  return response.data.permissions;
-}
-
-export async function updateRoleStructuredPermissions(
-  api: AxiosInstance,
-  roleId: string,
-  permissions: MenuPermissionEntry[]
-): Promise<void> {
-  await api.put(`/api/v1/system/custom-roles/${roleId}/permissions`, {
-    permissions,
-  });
 }
 
 // ── Quick Links ────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../core/auth/AuthContext";
-import { usePermission } from "../../components/common/RequirePermission";
+import { useRbacPagePermissions } from "../../components/common/RequirePermission";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -248,8 +248,7 @@ export default function RoleEditPage() {
 
   const isNew = !roleId;
   const isSuperAdmin = session?.user?.role === "super_admin";
-  const canCreate = usePermission("/rbac/roles", "CREATE");
-  const canUpdate = usePermission("/rbac/roles", "UPDATE");
+  const { write: canCreate, edit: canUpdate } = useRbacPagePermissions();
   const canWrite = isNew ? canCreate : canUpdate;
 
   const [menus, setMenus] = useState([]);

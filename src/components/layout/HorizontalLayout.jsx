@@ -13,7 +13,7 @@ import {
 import {
   LayoutDashboard, Ticket, ListChecks, CalendarDays, Users, CheckSquare,
   FolderKanban, Briefcase, ShoppingCart, FileText, MessageSquare, Mail,
-  HardDrive, KeyRound, CreditCard, ScrollText, Settings, Palette, Shield,
+  HardDrive, KeyRound, CreditCard, ScrollText, Settings, Palette,
   Bell, LogOut, ChevronDown, Menu, X, Layers,
 } from "lucide-react";
 
@@ -29,7 +29,6 @@ const SETTINGS_LINKS = [
   { path: "/settings/audit-log", label: "Audit Log", icon: ScrollText },
   { path: "/settings/system", label: "System", icon: Settings },
   { path: "/settings/branding", label: "Branding", icon: Palette },
-  { path: "/settings/custom-roles", label: "Roles", icon: Shield },
 ];
 
 export function HorizontalLayout({ children }) {

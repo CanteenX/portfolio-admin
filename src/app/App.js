@@ -17,8 +17,6 @@ const ApexChartsPage = React.lazy(() => import("../modules/charts/ApexChartsPage
 const ChartjsPage = React.lazy(() => import("../modules/charts/ChartjsPage"));
 const AuditLogPage = React.lazy(() => import("../modules/system/AuditLogPage"));
 const BrandingPage = React.lazy(() => import("../modules/system/BrandingPage"));
-const CustomRolesPage = React.lazy(() => import("../modules/system/CustomRolesPage"));
-const PermissionMatrixPage = React.lazy(() => import("../modules/system/PermissionMatrixPage"));
 const NotificationsPage = React.lazy(() => import("../modules/system/NotificationsPage"));
 const PaymentSettingsPage = React.lazy(() => import("../modules/system/PaymentSettingsPage"));
 const SystemSettingsPage = React.lazy(() => import("../modules/system/SystemSettingsPage"));
@@ -68,6 +66,11 @@ const PortfolioProjectsPage = React.lazy(() => import("../modules/deep/portfolio
 const PortfolioTeamPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioTeamPage").then(m => ({ default: m.PortfolioTeamPage })));
 const PortfolioSettingsPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioSettingsPage").then(m => ({ default: m.PortfolioSettingsPage })));
 const PortfolioContactsPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioContactsPage").then(m => ({ default: m.PortfolioContactsPage })));
+const PortfolioServicesPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioServicesPage").then(m => ({ default: m.PortfolioServicesPage })));
+const PortfolioSocialProofPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioSocialProofPage").then(m => ({ default: m.PortfolioSocialProofPage })));
+const PortfolioLegalPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioLegalPage").then(m => ({ default: m.PortfolioLegalPage })));
+const PortfolioFaqPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioFaqPage").then(m => ({ default: m.PortfolioFaqPage })));
+const PortfolioPostsPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioPostsPage").then(m => ({ default: m.PortfolioPostsPage })));
 const PortfolioMastersPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioMastersPage").then(m => ({ default: m.PortfolioMastersPage })));
 const PortfolioTechStackPage = React.lazy(() => import("../modules/deep/portfolio/PortfolioTechStackPage").then(m => ({ default: m.PortfolioTechStackPage })));
 
@@ -91,11 +94,7 @@ function AuthenticatedRoutes() {
 
   return (
     <FeatureFlagProvider flags={session?.uiFeatureFlags}>
-      <MenuProvider
-        menuGroups={session?.menuGroups}
-        rolePermissions={session?.currentRolePermissions}
-        isSuperAdmin={session?.user?.role === "super_admin"}
-      >
+      <MenuProvider menuGroups={session?.menuGroups}>
         <LayoutProvider>
           <ScrollToTop />
           <AppLayout>
@@ -109,8 +108,6 @@ function AuthenticatedRoutes() {
               <Route path="/settings/audit-log" element={<AuditLogPage />} />
               <Route path="/settings/system" element={<SystemSettingsPage />} />
               <Route path="/settings/branding" element={<BrandingPage />} />
-              <Route path="/settings/custom-roles" element={<CustomRolesPage />} />
-              <Route path="/settings/custom-roles/:id/permissions" element={<PermissionMatrixPage />} />
               <Route path="/settings/feature-toggles" element={<UIFeatureFlagsPage />} />
               <Route path="/settings/users" element={<UserManagementPage />} />
               <Route path="/settings/menu-management" element={<MenuManagementPage />} />
@@ -150,6 +147,13 @@ function AuthenticatedRoutes() {
               <Route path="/portfolio/team" element={<PortfolioTeamPage />} />
               <Route path="/portfolio/settings" element={<PortfolioSettingsPage />} />
               <Route path="/portfolio/contacts" element={<PortfolioContactsPage />} />
+              <Route path="/portfolio/services" element={<PortfolioServicesPage />} />
+              <Route path="/portfolio/social-proof" element={<PortfolioSocialProofPage />} />
+              {/* Super-admin-only by grant, not by route — the menu is seeded
+                  but handed to no role. See SUPER_ADMIN_ONLY_MENUS. */}
+              <Route path="/portfolio/legal" element={<PortfolioLegalPage />} />
+              <Route path="/portfolio/faq" element={<PortfolioFaqPage />} />
+              <Route path="/portfolio/posts" element={<PortfolioPostsPage />} />
               {/* Portfolio Masters */}
               <Route path="/portfolio/projects/masters" element={<PortfolioMastersPage />} />
               <Route path="/portfolio/masters/tech-stacks" element={<PortfolioTechStackPage />} />

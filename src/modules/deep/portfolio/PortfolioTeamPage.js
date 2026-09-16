@@ -82,9 +82,23 @@ function toSlug(name) {
   return name.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
 }
 
+/**
+ * Every field the member profile page renders.
+ *
+ * The form used to stop at the tagline, so bio, location, languages, skills,
+ * education, experience, projects and certificates had a renderer on the site
+ * and no way to fill them — the mirror image of the Hero-tab problem, and just
+ * as invisible: the profile page simply omitted the sections.
+ */
 const EMPTY_FORM = {
-  slug: "", name: "", role: "", avatar: "", power: "",
-  socials: { github: "", linkedin: "" },
+  slug: "", name: "", role: "", avatar: "", power: "", bio: "",
+  personal: { location: "", email: "", languages: [] },
+  skills: [],
+  education: [],
+  experience: [],
+  projects: [],
+  certificates: [],
+  socials: { github: "", linkedin: "", portfolio: "" },
   isActive: true, order: 0
 };
 
@@ -134,9 +148,21 @@ export function PortfolioTeamPage() {
       role: item.role ?? "",
       avatar: item.avatar ?? "",
       power: item.power ?? "",
+      bio: item.bio ?? "",
+      personal: {
+        location: item.personal?.location ?? "",
+        email: item.personal?.email ?? "",
+        languages: item.personal?.languages ?? []
+      },
+      skills: item.skills ?? [],
+      education: item.education ?? [],
+      experience: item.experience ?? [],
+      projects: item.projects ?? [],
+      certificates: item.certificates ?? [],
       socials: {
         github: item.socials?.github ?? "",
-        linkedin: item.socials?.linkedin ?? ""
+        linkedin: item.socials?.linkedin ?? "",
+        portfolio: item.socials?.portfolio ?? ""
       },
       isActive: item.isActive,
       order: item.order ?? 0
@@ -156,12 +182,46 @@ export function PortfolioTeamPage() {
     setForm(prev => ({ ...prev, socials: { ...prev.socials, [key]: value } }));
   }
 
+  function setPersonal(key, value) {
+    setForm(prev => ({ ...prev, personal: { ...prev.personal, [key]: value } }));
+  }
+
+  function addRow(key, template) {
+    setForm(prev => ({ ...prev, [key]: [...(prev[key] ?? []), template] }));
+  }
+
+  function setRow(key, index, field, value) {
+    setForm(prev => ({
+      ...prev,
+      [key]: prev[key].map((row, i) => (i === index ? { ...row, [field]: value } : row))
+    }));
+  }
+
+  function removeRow(key, index) {
+    setForm(prev => ({ ...prev, [key]: prev[key].filter((_, i) => i !== index) }));
+  }
+
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
     setError(null);
     try {
-      const payload = { ...form, order: Number(form.order) || 0 };
+      const payload = {
+        ...form,
+        order: Number(form.order) || 0,
+        // Level is a percentage the profile page renders as a bar, so a blank
+        // or non-numeric entry has to become a number before it is stored.
+        skills: form.skills
+          .filter(skill => skill.name?.trim())
+          .map(skill => ({ name: skill.name.trim(), level: Number(skill.level) || 0 })),
+        projects: form.projects.map(project => ({
+          ...project,
+          tags: (Array.isArray(project.tags) ? project.tags : String(project.tags ?? "").split(","))
+            .map(tag => String(tag).trim())
+            .filter(Boolean)
+        })),
+        certificates: form.certificates.filter(certificate => certificate.title?.trim())
+      };
       if (editing) await updatePortfolioMember(api, editing._id, payload);
       else await createPortfolioMember(api, payload);
       setShowModal(false);
@@ -309,8 +369,41 @@ export function PortfolioTeamPage() {
                 <input className={inputClass} value={form.power} onChange={e => setField("power", e.target.value)} placeholder="Designs distributed systems that don't fall over at peak traffic." />
               </div>
 
+              {/* Bio */}
+              <div>
+                <label className={labelClass}>Bio</label>
+                <textarea
+                  className={`${inputClass} resize-none`}
+                  rows={4}
+                  value={form.bio}
+                  onChange={e => setField("bio", e.target.value)}
+                  placeholder="A paragraph or two. Shown on the member's own page."
+                />
+              </div>
+
+              {/* Personal */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className={labelClass}>Location</label>
+                  <input className={inputClass} value={form.personal.location} onChange={e => setPersonal("location", e.target.value)} placeholder="Vadodara, IN" />
+                </div>
+                <div>
+                  <label className={labelClass}>Contact email</label>
+                  <input className={inputClass} type="email" value={form.personal.email} onChange={e => setPersonal("email", e.target.value)} placeholder="Optional — published publicly" />
+                </div>
+                <div>
+                  <label className={labelClass}>Languages</label>
+                  <input
+                    className={inputClass}
+                    value={form.personal.languages.join(", ")}
+                    onChange={e => setPersonal("languages", e.target.value.split(",").map(l => l.trim()).filter(Boolean))}
+                    placeholder="English, Hindi, Gujarati"
+                  />
+                </div>
+              </div>
+
               {/* Socials */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className={labelClass}>LinkedIn URL</label>
                   <input className={inputClass} type="url" value={form.socials.linkedin} onChange={e => setSocials("linkedin", e.target.value)} placeholder="https://linkedin.com/in/..." />
@@ -319,7 +412,86 @@ export function PortfolioTeamPage() {
                   <label className={labelClass}>GitHub URL</label>
                   <input className={inputClass} type="url" value={form.socials.github} onChange={e => setSocials("github", e.target.value)} placeholder="https://github.com/..." />
                 </div>
+                <div>
+                  <label className={labelClass}>Personal site</label>
+                  <input className={inputClass} type="url" value={form.socials.portfolio} onChange={e => setSocials("portfolio", e.target.value)} placeholder="https://..." />
+                </div>
               </div>
+
+              {/* Skills */}
+              <RowSection label="Skills" onAdd={() => addRow("skills", { name: "", level: 80 })}>
+                {form.skills.map((skill, i) => (
+                  <RowShell key={i} onRemove={() => removeRow("skills", i)}>
+                    <input className={inputClass} value={skill.name} onChange={e => setRow("skills", i, "name", e.target.value)} placeholder="Kubernetes" />
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      className={inputClass}
+                      value={skill.level ?? ""}
+                      onChange={e => setRow("skills", i, "level", e.target.value)}
+                      placeholder="Level 0–100"
+                    />
+                  </RowShell>
+                ))}
+              </RowSection>
+
+              {/* Experience */}
+              <RowSection
+                label="Experience"
+                onAdd={() => addRow("experience", { period: "", role: "", company: "", desc: "" })}
+              >
+                {form.experience.map((row, i) => (
+                  <RowShell key={i} onRemove={() => removeRow("experience", i)} columns={2}>
+                    <input className={inputClass} value={row.period} onChange={e => setRow("experience", i, "period", e.target.value)} placeholder="2022 — Present" />
+                    <input className={inputClass} value={row.role} onChange={e => setRow("experience", i, "role", e.target.value)} placeholder="Role" />
+                    <input className={inputClass} value={row.company} onChange={e => setRow("experience", i, "company", e.target.value)} placeholder="Company" />
+                    <input className={inputClass} value={row.desc} onChange={e => setRow("experience", i, "desc", e.target.value)} placeholder="What they did" />
+                  </RowShell>
+                ))}
+              </RowSection>
+
+              {/* Education */}
+              <RowSection
+                label="Education"
+                onAdd={() => addRow("education", { year: "", degree: "", school: "" })}
+              >
+                {form.education.map((row, i) => (
+                  <RowShell key={i} onRemove={() => removeRow("education", i)} columns={3}>
+                    <input className={inputClass} value={row.year} onChange={e => setRow("education", i, "year", e.target.value)} placeholder="2021" />
+                    <input className={inputClass} value={row.degree} onChange={e => setRow("education", i, "degree", e.target.value)} placeholder="B.Tech, Computer Science" />
+                    <input className={inputClass} value={row.school} onChange={e => setRow("education", i, "school", e.target.value)} placeholder="Institution" />
+                  </RowShell>
+                ))}
+              </RowSection>
+
+              {/* Notable work */}
+              <RowSection
+                label="Notable work"
+                onAdd={() => addRow("projects", { type: "", title: "", tags: [] })}
+              >
+                {form.projects.map((row, i) => (
+                  <RowShell key={i} onRemove={() => removeRow("projects", i)} columns={3}>
+                    <input className={inputClass} value={row.type} onChange={e => setRow("projects", i, "type", e.target.value)} placeholder="Type (Mobile)" />
+                    <input className={inputClass} value={row.title} onChange={e => setRow("projects", i, "title", e.target.value)} placeholder="Title" />
+                    <input
+                      className={inputClass}
+                      value={Array.isArray(row.tags) ? row.tags.join(", ") : row.tags}
+                      onChange={e => setRow("projects", i, "tags", e.target.value.split(","))}
+                      placeholder="Tags, comma separated"
+                    />
+                  </RowShell>
+                ))}
+              </RowSection>
+
+              {/* Certificates */}
+              <RowSection label="Certificates" onAdd={() => addRow("certificates", { title: "" })}>
+                {form.certificates.map((row, i) => (
+                  <RowShell key={i} onRemove={() => removeRow("certificates", i)} columns={1}>
+                    <input className={inputClass} value={row.title} onChange={e => setRow("certificates", i, "title", e.target.value)} placeholder="AWS Solutions Architect" />
+                  </RowShell>
+                ))}
+              </RowSection>
 
               {/* Order & Active */}
               <div className="grid grid-cols-2 gap-4 items-end">
@@ -348,6 +520,43 @@ export function PortfolioTeamPage() {
     </div>
   );
 }
+
+function RowSection({ label, onAdd, children }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className={labelClass}>{label}</label>
+        <button type="button" onClick={onAdd} className="text-xs text-primary hover:opacity-80">
+          + Add
+        </button>
+      </div>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function RowShell({ onRemove, columns = 2, children }) {
+  return (
+    <div className="flex items-start gap-2">
+      <div className={`flex-1 grid gap-2 ${COLUMN_CLASS[columns] ?? COLUMN_CLASS[2]}`}>{children}</div>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="mt-2 text-red-400 hover:text-red-300 text-lg leading-none flex-shrink-0"
+        title="Remove"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+/** Tailwind compiles the classes it can see, so these cannot be interpolated. */
+const COLUMN_CLASS = {
+  1: "grid-cols-1",
+  2: "grid-cols-2",
+  3: "grid-cols-3"
+};
 
 const inputClass = "mt-1 w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary transition-all";
 const labelClass = "text-xs font-medium text-muted-foreground uppercase tracking-wider";

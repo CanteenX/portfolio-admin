@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/
 import {
   LayoutDashboard, Ticket, ListChecks, CalendarDays, Users, CheckSquare,
   FolderKanban, Briefcase, ShoppingCart, FileText, MessageSquare, Mail,
-  HardDrive, KeyRound, CreditCard, ScrollText, Settings, Palette, Shield,
+  HardDrive, KeyRound, CreditCard, ScrollText, Settings, Palette,
   Bell, Layers,
 } from "lucide-react";
 
@@ -27,7 +27,6 @@ const SETTINGS_LINKS = [
   { path: "/settings/audit-log", label: "Audit Log", icon: ScrollText, group: "settings" },
   { path: "/settings/system", label: "System", icon: Settings, group: "settings" },
   { path: "/settings/branding", label: "Branding", icon: Palette, group: "settings" },
-  { path: "/settings/custom-roles", label: "Roles", icon: Shield, group: "settings" },
 ];
 
 export function TwoColumnLayout({ children }) {

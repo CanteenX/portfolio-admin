@@ -6,28 +6,30 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useLocation } from "react-router-dom";
-import { PERMISSION_ACTIONS } from "@admin-platform/shared-types";
 
-const ALL_TRUE = { read: true, create: true, update: true, delete: true, export: true };
-const ALL_FALSE = { read: false, create: false, update: false, delete: false, export: false };
-
+/**
+ * Provides the menu tree. Nothing more.
+ *
+ * This used to also resolve per-page permissions, but that machinery read
+ * `session.currentRolePermissions`, which only ever existed for admins holding
+ * a CustomRole. A-6 retired CustomRole — it narrowed the UI while the API
+ * stayed open to any admin, so it was theatre rather than access control — and
+ * with it the field. What was left returned "no permissions" for every
+ * non-super-admin and was consumed by exactly one component (PermissionGate),
+ * itself unused since the screens moved to `RbacGate`.
+ *
+ * Page permissions now come from `useRbacPagePermissions`, which reads
+ * `session.rbacPermissions` — the grants the server actually enforces.
+ */
 const MenuContext = createContext({
   menuGroups: [],
   loading: true,
-  currentPagePermissions: ALL_FALSE,
-  getPermissionsForMenu: () => ALL_FALSE,
   findMenuIdByUrl: () => null,
   invalidateMenuCache: () => {},
 });
 
 export function useMenuContext() {
   return useContext(MenuContext);
-}
-
-export function usePagePermissions() {
-  const { currentPagePermissions } = useContext(MenuContext);
-  return currentPagePermissions;
 }
 
 function findMenuIdInItems(items, cleanUrl) {
@@ -44,12 +46,11 @@ function findMenuIdInItems(items, cleanUrl) {
 }
 
 /**
- * @param {{ children: React.ReactNode, menuGroups?: Array, rolePermissions?: Array, isSuperAdmin: boolean }} props
+ * @param {{ children: React.ReactNode, menuGroups?: Array }} props
  */
-export function MenuProvider({ children, menuGroups: initialMenuGroups, rolePermissions, isSuperAdmin }) {
+export function MenuProvider({ children, menuGroups: initialMenuGroups }) {
   const [menuGroups, setMenuGroups] = useState(initialMenuGroups ?? []);
   const [loading] = useState(false);
-  const { pathname } = useLocation();
 
   useEffect(() => {
     if (initialMenuGroups) {
@@ -72,32 +73,6 @@ export function MenuProvider({ children, menuGroups: initialMenuGroups, rolePerm
     [menuGroups]
   );
 
-  const getPermissionsForMenu = useCallback(
-    (menuId) => {
-      if (isSuperAdmin) return ALL_TRUE;
-      if (!rolePermissions) return ALL_FALSE;
-
-      const entry = rolePermissions.find(
-        (p) => p.menuId === menuId || p.menuGroupId === menuId
-      );
-      if (!entry) return ALL_FALSE;
-
-      const result = {};
-      for (const action of PERMISSION_ACTIONS) {
-        result[action] = entry[action];
-      }
-      return result;
-    },
-    [isSuperAdmin, rolePermissions]
-  );
-
-  const currentPagePermissions = useMemo(() => {
-    if (isSuperAdmin) return ALL_TRUE;
-    const menuId = findMenuIdByUrl(pathname);
-    if (!menuId) return ALL_FALSE;
-    return getPermissionsForMenu(menuId);
-  }, [isSuperAdmin, pathname, findMenuIdByUrl, getPermissionsForMenu]);
-
   const invalidateMenuCache = useCallback(() => {
     setMenuGroups([]);
   }, []);
@@ -106,12 +81,10 @@ export function MenuProvider({ children, menuGroups: initialMenuGroups, rolePerm
     () => ({
       menuGroups,
       loading,
-      currentPagePermissions,
-      getPermissionsForMenu,
       findMenuIdByUrl,
       invalidateMenuCache,
     }),
-    [menuGroups, loading, currentPagePermissions, getPermissionsForMenu, findMenuIdByUrl, invalidateMenuCache]
+    [menuGroups, loading, findMenuIdByUrl, invalidateMenuCache]
   );
 
   return <MenuContext.Provider value={value}>{children}</MenuContext.Provider>;

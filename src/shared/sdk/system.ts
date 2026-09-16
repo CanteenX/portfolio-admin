@@ -159,60 +159,12 @@ export async function updateBranding(
   return response.data;
 }
 
-// ── Custom Roles ───────────────────────────────────────────────
-
-export type CustomRole = {
-  id: string;
-  name: string;
-  permissions: string[];
-};
-
-export async function getCustomRoles(
-  api: AxiosInstance
-): Promise<CustomRole[]> {
-  const response = await api.get<{ roles: CustomRole[] }>("/api/v1/system/custom-roles");
-  return response.data.roles;
-}
-
-export async function createCustomRole(
-  api: AxiosInstance,
-  payload: { name: string; permissions: string[] }
-): Promise<CustomRole> {
-  const response = await api.post<CustomRole>("/api/v1/system/custom-roles", payload);
-  return response.data;
-}
-
-export async function updateCustomRole(
-  api: AxiosInstance,
-  id: string,
-  payload: { name: string; permissions: string[] }
-): Promise<CustomRole> {
-  const response = await api.put<CustomRole>(`/api/v1/system/custom-roles/${id}`, payload);
-  return response.data;
-}
-
-export async function deleteCustomRole(
-  api: AxiosInstance,
-  id: string
-): Promise<void> {
-  await api.delete(`/api/v1/system/custom-roles/${id}`);
-}
-
-export async function assignCustomRole(
-  api: AxiosInstance,
-  userId: string,
-  customRoleId: string | null
-): Promise<void> {
-  await api.put(`/api/v1/system/users/${userId}/custom-role`, { customRoleId });
-}
-
 // ── User Management ───────────────────────────────────────────
 
 export type UserRecord = {
   _id: string;
   email: string;
   role: "super_admin" | "admin";
-  customRoleId?: string;
   createdAt: string;
   updatedAt: string;
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../core/auth/AuthContext";
-import { usePermission } from "../../components/common/RequirePermission";
+import { useRbacPagePermissions } from "../../components/common/RequirePermission";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -22,9 +22,10 @@ export default function ActionTypePage() {
   const { api, session } = useAuth();
   const isSuperAdmin = session?.user?.role === "super_admin";
 
-  const canCreate = usePermission("/rbac/actions", "CREATE");
-  const canUpdate = usePermission("/rbac/actions", "UPDATE");
-  const canDelete = usePermission("/rbac/actions", "DELETE");
+  // The server's action vocabulary is lowercase read/write/edit/delete. Asking
+  // for "CREATE" matched nothing, so every button here was hidden from every
+  // non-super-admin — a permissions bug that looked like a missing grant.
+  const { write: canCreate, edit: canUpdate, delete: canDelete } = useRbacPagePermissions();
 
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);

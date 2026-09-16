@@ -236,17 +236,26 @@ Modules can be enabled/disabled by a super admin via Settings > Feature Config. 
 
 ### Permission Gates
 
-The `MenuContext` provides per-page permissions based on the user's custom role:
+`useRbacPagePermissions()` resolves the current page's grants from the RBAC
+permissions in session-bootstrap; `<RbacGate action="...">` wraps the controls
+they govern:
 
-| Permission | Controls                  |
-|------------|---------------------------|
-| `read`     | Can view the page/data    |
-| `create`   | Shows "Add New" buttons   |
-| `update`   | Shows "Edit" buttons      |
-| `delete`   | Shows "Delete" buttons    |
-| `export`   | Shows "Export" buttons    |
+| Action   | Controls                  |
+|----------|---------------------------|
+| `read`   | Can view the page/data    |
+| `write`  | Shows "Add New" buttons   |
+| `edit`   | Shows "Edit" buttons      |
+| `delete` | Shows "Delete" buttons    |
+| `print`  | Shows "Export" buttons    |
+| `mail`   | Shows "Send" buttons      |
 
 Super admins bypass all permission checks.
+
+These gates are presentation only — they hide controls the user cannot use.
+The server enforces the same grants on every request, so a hidden button is a
+courtesy, not a boundary. Verify access changes as a non-super-admin:
+`requireRbacPermission` short-circuits for `super_admin`, so testing as one
+proves nothing.
 
 ### Feature Flags
 

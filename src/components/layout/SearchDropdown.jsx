@@ -22,7 +22,7 @@ const PAGES = [
   { label: "Audit Log", path: "/settings/audit" },
   { label: "System Settings", path: "/settings/system" },
   { label: "Branding", path: "/settings/branding" },
-  { label: "Custom Roles", path: "/settings/roles" },
+  { label: "Roles", path: "/rbac/roles" },
   { label: "Notifications", path: "/notifications" },
 ];
 

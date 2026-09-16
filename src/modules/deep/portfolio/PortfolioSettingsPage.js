@@ -3,21 +3,83 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../../core/auth/AuthContext";
 import { getPortfolioSettings, updatePortfolioSettings } from "../../../shared/sdk";
 
-const TABS = ["Hero", "Navbar", "Footer", "About", "Services", "Process", "Team Playbook", "Contact Info"];
+const TABS = [
+  "Hero",
+  "Navbar",
+  "Footer",
+  "About",
+  "Services",
+  "Process",
+  "Team Playbook",
+  "Contact Info",
+  "Page Headings",
+  "Closing CTA",
+  "Enquiry Form",
+  "Engagement"
+];
+
+/**
+ * The pages whose opening block — eyebrow, heading, lead — is editable.
+ *
+ * Keys match `settings.pageCopy` on the server and the key the site passes to
+ * `resolvePageCopy`. The site keeps its shipped copy for any field left blank,
+ * which is why the placeholders below show exactly what ships.
+ */
+const PAGE_COPY_FIELDS = [
+  { key: "work", label: "Work", eyebrow: "/work — Selected Engagements", title: "Engineering that solves business problems." },
+  { key: "services", label: "Services", eyebrow: "Our_Services //", title: "What we build." },
+  { key: "team", label: "Team", eyebrow: "/team — The Collective", title: "Meet our team." },
+  { key: "about", label: "About", eyebrow: "/story — Founders", title: "Engineering the next digital frontier." },
+  { key: "process", label: "How We Work", eyebrow: "/methodology — Protocol", title: "Our engineering methodology." },
+  { key: "contact", label: "Contact", eyebrow: "Initialize // Let's Talk", title: "Let's build together." },
+  { key: "insights", label: "Insights", eyebrow: "/insights — Field Notes", title: "What we've learned shipping software." },
+  { key: "faq", label: "FAQ", eyebrow: "/faq — Questions", title: "Answers before you ask." }
+];
 
 const EMPTY = {
   hero: { tagline: "", description: "", ctaPrimary: { label: "View Work", href: "/work" }, ctaSecondary: { label: "Contact Us", href: "/contact" }, featuredProjects: [] },
   navbar: { brandName: "FORGE_COLLECTIVE", links: [] },
   footer: { description: "", email: "", version: "v1.0", links: [] },
   techMarquee: [],
-  services: [],
   callSlots: [],
   about: { vision: "", mission: "", values: [], stats: [] },
   process: { phases: [], perks: [] },
   teamPlaybook: [],
   contactInfo: { email: "", phone: "" },
+  pageCopy: {},
+  contactCta: {
+    eyebrow: "",
+    title: "",
+    lead: "",
+    primary: { label: "", href: "" },
+    secondary: { label: "", href: "" }
+  },
+  contactForm: { budgetBands: [], timelines: [] },
+  engagement: { eyebrow: "", title: "", lead: "", bands: [], footnote: "" },
   isActive: true
 };
+
+/**
+ * Fills in whatever the saved document is missing.
+ *
+ * A plain spread over EMPTY is not enough: settings saved before a section
+ * existed come back without it, and a top-level spread would leave
+ * `contactCta.primary` undefined and crash the input that reads its label. Only
+ * one level of nesting needs this — every deeper value is an array or a string.
+ */
+function hydrate(data) {
+  const merged = { ...EMPTY, ...data };
+  for (const [key, value] of Object.entries(EMPTY)) {
+    if (!value || Array.isArray(value) || typeof value !== "object") continue;
+    merged[key] = { ...value, ...(data[key] ?? {}) };
+  }
+  merged.contactCta = {
+    ...merged.contactCta,
+    primary: { ...EMPTY.contactCta.primary, ...(merged.contactCta.primary ?? {}) },
+    secondary: { ...EMPTY.contactCta.secondary, ...(merged.contactCta.secondary ?? {}) }
+  };
+  return merged;
+}
 
 export function PortfolioSettingsPage() {
   const { api } = useAuth();
@@ -34,7 +96,7 @@ export function PortfolioSettingsPage() {
       try {
         const data = await getPortfolioSettings(api);
         if (data && Object.keys(data).length > 0) {
-          setForm(prev => ({ ...EMPTY, ...data }));
+          setForm(hydrate(data));
         }
       } catch (e) {
         setError("Failed to load settings");
@@ -69,6 +131,16 @@ export function PortfolioSettingsPage() {
     setForm(prev => ({
       ...prev,
       [section]: { ...prev[section], [subKey]: { ...prev[section][subKey], [key]: value } }
+    }));
+  }
+
+  function setPageCopy(page, key, value) {
+    setForm(prev => ({
+      ...prev,
+      pageCopy: {
+        ...prev.pageCopy,
+        [page]: { ...(prev.pageCopy?.[page] ?? {}), [key]: value }
+      }
     }));
   }
 
@@ -227,9 +299,21 @@ export function PortfolioSettingsPage() {
         {/* ── SERVICES ─────────────────────────────────────────────────── */}
         {tab === "Services" && (
           <Section title="Services & Call Slots">
-            <div>
-              <label className={lbl}>Services (one per line — used in contact form dropdown)</label>
-              <textarea className={`${inp} resize-none`} rows={6} value={(form.services ?? []).join("\n")} onChange={e => setForm(prev => ({ ...prev, services: e.target.value.split("\n").map(s => s.trim()).filter(Boolean) }))} placeholder="App Development&#10;Website Building&#10;CRM Panel" />
+            {/* The plain-text services list that used to live here has moved to
+                Portfolio CMS → Services. It could only store names, so the site
+                had to look each description up by exact title match — renaming a
+                service silently blanked its copy. Leaving the box here would
+                leave an input that saves to a field nothing renders. */}
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <div className="text-sm font-medium mb-1">Services have moved</div>
+              <p className="text-sm text-muted-foreground">
+                Services are now edited under <span className="font-medium">Portfolio CMS → Services</span>, where each
+                one carries its own description, tags and bullet points. That single list drives the services page, the
+                homepage carousel and this site's contact form dropdown.
+              </p>
+              <a href="/admin/portfolio/services" className="inline-block mt-3 text-sm text-blue-400 hover:text-blue-300">
+                Open Services →
+              </a>
             </div>
             <div>
               <label className={lbl}>Call Slots (one per line — shown as booking buttons)</label>
@@ -293,6 +377,119 @@ export function PortfolioSettingsPage() {
           </Section>
         )}
 
+        {/* ── PAGE HEADINGS ────────────────────────────────────────────── */}
+        {tab === "Page Headings" && (
+          <Section title="Page Headings">
+            <p className="text-sm text-muted-foreground">
+              The opening block on each page. Leave a field blank to keep the copy the site ships with — the
+              placeholder shows what that is. Headings that highlight one word keep the highlight as long as the
+              word is still in the sentence.
+            </p>
+            {PAGE_COPY_FIELDS.map(page => (
+              <div key={page.key} className="rounded-lg border border-border p-4 space-y-3">
+                <div className="text-sm font-medium">{page.label}</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <F
+                    label="Eyebrow"
+                    value={form.pageCopy?.[page.key]?.eyebrow}
+                    onChange={v => setPageCopy(page.key, "eyebrow", v)}
+                    placeholder={page.eyebrow}
+                  />
+                  <F
+                    label="Heading"
+                    value={form.pageCopy?.[page.key]?.title}
+                    onChange={v => setPageCopy(page.key, "title", v)}
+                    placeholder={page.title}
+                  />
+                </div>
+                <F
+                  label="Lead paragraph"
+                  value={form.pageCopy?.[page.key]?.lead}
+                  onChange={v => setPageCopy(page.key, "lead", v)}
+                  placeholder="Optional supporting sentence"
+                />
+              </div>
+            ))}
+          </Section>
+        )}
+
+        {/* ── CLOSING CTA ──────────────────────────────────────────────── */}
+        {tab === "Closing CTA" && (
+          <Section title="Closing Call To Action">
+            <p className="text-sm text-muted-foreground">
+              Appears at the bottom of nearly every page. Blank fields fall back to the shipped copy.
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <F label="Eyebrow" value={form.contactCta.eyebrow} onChange={v => setNested("contactCta", "eyebrow", v)} placeholder="Ready_To_Build //" />
+              <F label="Heading" value={form.contactCta.title} onChange={v => setNested("contactCta", "title", v)} placeholder="Let's ship something." />
+            </div>
+            <TA label="Lead paragraph" value={form.contactCta.lead} onChange={v => setNested("contactCta", "lead", v)} rows={2} />
+            <div className="grid grid-cols-2 gap-4">
+              <F label="Primary button — Label" value={form.contactCta.primary.label} onChange={v => setNestedDeep("contactCta", "primary", "label", v)} placeholder="Start a project" />
+              <F label="Primary button — Href" value={form.contactCta.primary.href} onChange={v => setNestedDeep("contactCta", "primary", "href", v)} placeholder="/contact" />
+              <F label="Secondary button — Label" value={form.contactCta.secondary.label} onChange={v => setNestedDeep("contactCta", "secondary", "label", v)} placeholder="Leave blank to hide" />
+              <F label="Secondary button — Href" value={form.contactCta.secondary.href} onChange={v => setNestedDeep("contactCta", "secondary", "href", v)} placeholder="/work" />
+            </div>
+          </Section>
+        )}
+
+        {/* ── ENQUIRY FORM ─────────────────────────────────────────────── */}
+        {tab === "Enquiry Form" && (
+          <Section title="Enquiry Form Options">
+            <p className="text-sm text-muted-foreground">
+              The two qualification dropdowns on the contact page. These are stored as text on each lead, so
+              changing them does not affect enquiries already received. Leave a list empty to keep the shipped one.
+            </p>
+            <div>
+              <label className={lbl}>Budget bands (one per line)</label>
+              <textarea
+                className={`${inp} resize-none`}
+                rows={6}
+                value={(form.contactForm?.budgetBands ?? []).join("\n")}
+                onChange={e => setNested("contactForm", "budgetBands", splitLines(e.target.value))}
+                placeholder={"Under ₹2L\n₹2L – ₹5L\n₹5L – ₹15L\n₹15L+\nNot sure yet"}
+              />
+            </div>
+            <div>
+              <label className={lbl}>Timelines (one per line)</label>
+              <textarea
+                className={`${inp} resize-none`}
+                rows={5}
+                value={(form.contactForm?.timelines ?? []).join("\n")}
+                onChange={e => setNested("contactForm", "timelines", splitLines(e.target.value))}
+                placeholder={"As soon as possible\n1–3 months\n3–6 months\nJust exploring"}
+              />
+            </div>
+          </Section>
+        )}
+
+        {/* ── ENGAGEMENT ───────────────────────────────────────────────── */}
+        {tab === "Engagement" && (
+          <Section title="Engagement Models — How We Work">
+            <p className="text-sm text-muted-foreground">
+              Indicative bands shown on the How We Work page, so a buyer can tell whether a conversation is worth
+              starting. With no bands added the whole section is hidden — publishing commercials stays your call.
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <F label="Eyebrow" value={form.engagement.eyebrow} onChange={v => setNested("engagement", "eyebrow", v)} placeholder="Engagement // Indicative" />
+              <F label="Heading" value={form.engagement.title} onChange={v => setNested("engagement", "title", v)} placeholder="How engagements are usually shaped." />
+            </div>
+            <TA label="Lead paragraph" value={form.engagement.lead} onChange={v => setNested("engagement", "lead", v)} rows={2} />
+            <ArrSection label="Bands" items={form.engagement.bands}
+              onAdd={() => addToArray("engagement.bands", { name: "", range: "", duration: "", description: "" })}
+              onRemove={i => removeFromArray("engagement.bands", i)}
+              renderItem={(item, i) => (
+                <div className="grid grid-cols-2 gap-2">
+                  <input className={inp} placeholder="Name (Focused build)" value={item.name} onChange={e => updateInArray("engagement.bands", i, "name", e.target.value)} />
+                  <input className={inp} placeholder="Range (₹2L – ₹5L)" value={item.range} onChange={e => updateInArray("engagement.bands", i, "range", e.target.value)} />
+                  <input className={inp} placeholder="Duration (4–6 weeks)" value={item.duration} onChange={e => updateInArray("engagement.bands", i, "duration", e.target.value)} />
+                  <input className={inp} placeholder="Who it suits" value={item.description} onChange={e => updateInArray("engagement.bands", i, "description", e.target.value)} />
+                </div>
+              )} />
+            <F label="Footnote" value={form.engagement.footnote} onChange={v => setNested("engagement", "footnote", v)} placeholder="Indicative only — scope decides the number." />
+          </Section>
+        )}
+
         <div className="flex items-center justify-between pt-4 border-t border-border">
           <div className="flex items-center gap-2">
             <input type="checkbox" id="isActiveSetting" checked={form.isActive} onChange={e => setForm(prev => ({ ...prev, isActive: e.target.checked }))} className="rounded" />
@@ -305,6 +502,11 @@ export function PortfolioSettingsPage() {
       </form>
     </div>
   );
+}
+
+/** Textarea-as-list: blank lines and stray spaces are the editor's, not data. */
+function splitLines(value) {
+  return value.split("\n").map(s => s.trim()).filter(Boolean);
 }
 
 const inp = "mt-1 w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary transition-all";

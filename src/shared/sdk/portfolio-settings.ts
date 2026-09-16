@@ -1,5 +1,18 @@
 import type { AxiosInstance } from "axios";
 
+export type PageCopy = { eyebrow: string; title: string; lead: string };
+
+/** Must match `pageCopy` on the server and the key the website resolves with. */
+export type PageCopyKey =
+  | "work"
+  | "services"
+  | "team"
+  | "about"
+  | "process"
+  | "contact"
+  | "insights"
+  | "faq";
+
 export type PortfolioSettings = {
   _id?: string;
   hero: {
@@ -12,7 +25,6 @@ export type PortfolioSettings = {
   navbar: { brandName: string; links: { label: string; href: string }[] };
   footer: { description: string; email: string; version: string; links: { label: string; href: string }[] };
   techMarquee: string[];
-  services: string[];
   callSlots: string[];
   about: {
     vision: string;
@@ -26,6 +38,23 @@ export type PortfolioSettings = {
   };
   teamPlaybook: { phase: string; name: string; body: string }[];
   contactInfo: { email: string; phone: string };
+  /** Per-page opening block. A blank field means "keep the shipped copy". */
+  pageCopy?: Partial<Record<PageCopyKey, PageCopy>>;
+  contactCta?: {
+    eyebrow: string;
+    title: string;
+    lead: string;
+    primary: { label: string; href: string };
+    secondary: { label: string; href: string };
+  };
+  contactForm?: { budgetBands: string[]; timelines: string[] };
+  engagement?: {
+    eyebrow: string;
+    title: string;
+    lead: string;
+    bands: { name: string; range: string; duration: string; description: string }[];
+    footnote: string;
+  };
   isActive: boolean;
 };
 

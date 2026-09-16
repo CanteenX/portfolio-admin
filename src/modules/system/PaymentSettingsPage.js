@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../core/auth/AuthContext";
+import { useRbacPagePermissions } from "../../components/common/RequirePermission";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { getPaymentSettings } from "@admin-platform/shared-sdk";
 import { Card, CardContent } from "../../components/ui/card";
@@ -9,7 +10,11 @@ import { Skeleton } from "../../components/ui/skeleton";
 import { CreditCard, Globe, AlertCircle } from "lucide-react";
 
 export default function PaymentSettingsPage() {
-  const { api, session } = useAuth();
+  const { api } = useAuth();
+  // Delegable read. The payload is configuration status and webhook paths —
+  // never keys or secrets — so someone diagnosing a failed checkout does not
+  // need the super admin to read this page aloud to them.
+  const { read: canRead } = useRbacPagePermissions();
   const [settings, setSettings] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -22,8 +27,12 @@ export default function PaymentSettingsPage() {
       .finally(() => setLoading(false));
   }, [api]);
 
-  if (session?.user?.role !== "super_admin") {
-    return <div className="text-destructive p-6">Access denied. Super admin only.</div>;
+  if (!canRead) {
+    return (
+      <div className="text-destructive p-6">
+        Access denied — you have no read permission for Payments.
+      </div>
+    );
   }
   if (loading) return (
     <div className="space-y-4 max-w-3xl">

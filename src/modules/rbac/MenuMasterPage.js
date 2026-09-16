@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../core/auth/AuthContext";
-import { usePermission } from "../../components/common/RequirePermission";
+import { useRbacPagePermissions } from "../../components/common/RequirePermission";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -68,9 +68,7 @@ function buildPath(menuId, allMenus) {
 export default function MenuMasterPage() {
   const { api } = useAuth();
 
-  const canCreate = usePermission("/rbac/menus", "CREATE");
-  const canUpdate = usePermission("/rbac/menus", "UPDATE");
-  const canDelete = usePermission("/rbac/menus", "DELETE");
+  const { write: canCreate, edit: canUpdate, delete: canDelete } = useRbacPagePermissions();
 
   const [menus, setMenus] = useState([]);
   const [loading, setLoading] = useState(true);

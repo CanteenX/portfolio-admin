@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../core/auth/AuthContext";
-import { usePermission } from "../../components/common/RequirePermission";
+import { useRbacPagePermissions } from "../../components/common/RequirePermission";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -76,9 +76,7 @@ const emptyForm = {
 export default function TaskPage() {
   const { api } = useAuth();
 
-  const canCreate = usePermission("/rbac/tasks", "CREATE");
-  const canUpdate = usePermission("/rbac/tasks", "UPDATE");
-  const canDelete = usePermission("/rbac/tasks", "DELETE");
+  const { write: canCreate, edit: canUpdate, delete: canDelete } = useRbacPagePermissions();
 
   const [tasks, setTasks] = useState([]);
   const [assignees, setAssignees] = useState([]);
