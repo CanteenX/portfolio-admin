@@ -51,10 +51,19 @@ export function LoginPage() {
       const destination = resolveSafeRedirect(searchParams.get("redirect"));
       navigate(destination, { replace: true });
     } catch (err) {
-      if (err?.response?.status === 429 || err?.status === 429) {
+      // Distinguish the failure, because the old catch-all "check your
+      // credentials" sent people hunting for a password problem when the
+      // server had never answered at all — a stalled connection read exactly
+      // like a wrong password.
+      const status = err?.response?.status ?? err?.status;
+      if (status === 429) {
         setError("Too many login attempts. Please wait and try again.");
+      } else if (status === 401 || status === 400) {
+        setError("Incorrect email or password.");
+      } else if (!err?.response) {
+        setError("Couldn't reach the server. Check your connection and try again.");
       } else {
-        setError("Login failed. Check your credentials.");
+        setError("The server had a problem signing you in. Please try again.");
       }
     } finally {
       setSubmitting(false);
