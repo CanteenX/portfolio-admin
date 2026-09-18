@@ -6,20 +6,6 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ?? "http://localhost:700
 
 const AuthContext = createContext(null);
 
-async function fetchRbacPermissions(api) {
-  try {
-    const res = await api.get("/api/v1/auth/user/me");
-    return {
-      rbacPermissions: res.data.permissions ?? {},
-      rbacAllowedMenus: res.data.allowedMenus ?? [],
-      employeeId: res.data.employeeId ?? null,
-      rbacRoleName: res.data.roleName ?? null,
-    };
-  } catch {
-    return { rbacPermissions: {}, rbacAllowedMenus: [], employeeId: null, rbacRoleName: null };
-  }
-}
-
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [session, setSession] = useState(null);
@@ -41,11 +27,16 @@ export function AuthProvider({ children }) {
       return;
     }
     try {
-      const [bootstrap, rbacData] = await Promise.all([
-        getSessionBootstrap(api),
-        fetchRbacPermissions(api),
-      ]);
-      setSession({ ...bootstrap, ...rbacData });
+      // Bootstrap is the single source of the session, RBAC snapshot included.
+      //
+      // This used to run a second request to /auth/user/me in parallel and
+      // spread its result LAST. That call swallowed every error and returned
+      // rbacAllowedMenus: [] — so any failure of a redundant request overwrote
+      // the menus bootstrap had already delivered, and the sidebar showed
+      // "No menus assigned" to a super admin holding all 82. Both endpoints
+      // build the same snapshot server-side, so the second call bought nothing
+      // except a way to lose data it duplicated.
+      setSession(await getSessionBootstrap(api));
     } catch {
       logout();
     } finally {
@@ -53,17 +44,20 @@ export function AuthProvider({ children }) {
     }
   }, [api, logout, token]);
 
+  // Deliberately does NOT set the global `loading` flag.
+  //
+  // App renders a full-screen spinner while `loading` is true, which unmounts
+  // the entire route tree — LoginPage included. Setting it here meant a failed
+  // login caught its error on a component that no longer existed, React
+  // discarded the setError, and the page remounted blank: no message, just a
+  // form that had seemingly done nothing. LoginPage owns its own `submitting`
+  // state for the button. On success, setToken triggers refreshSession, which
+  // legitimately shows the spinner while the session loads.
   const login = useCallback(
     async (payload) => {
-      setLoading(true);
-      try {
-        const response = await loginRequest(api, payload);
-        localStorage.setItem(TOKEN_KEY, response.token);
-        setToken(response.token);
-      } catch (error) {
-        setLoading(false);
-        throw error;
-      }
+      const response = await loginRequest(api, payload);
+      localStorage.setItem(TOKEN_KEY, response.token);
+      setToken(response.token);
     },
     [api]
   );

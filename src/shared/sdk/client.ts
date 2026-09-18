@@ -31,7 +31,11 @@ export function createApiClient(baseURL: string, getToken: () => string | null) 
     (error) => {
       // 403 is deliberately NOT handled here: it means "authenticated but not
       // permitted", which the screen should show, not log the user out over.
-      if (error?.response?.status === 401) {
+      // A 401 from the login request itself means "wrong credentials", not
+      // "your session expired" — so it must reach the login form as an error
+      // rather than firing the session-ended handler.
+      const isLoginAttempt = String(error?.config?.url ?? "").includes("/auth/login");
+      if (error?.response?.status === 401 && !isLoginAttempt) {
         onUnauthorized?.();
       }
       return Promise.reject(error);
