@@ -423,12 +423,12 @@ export function AnalyticsDashboardPage() {
               </>
             )}
 
-            <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+            <Select value={campaignFilter || "all"} onValueChange={(value) => setCampaignFilter(value === "all" ? "" : value)}>
               <SelectTrigger className="w-[200px] text-sm">
                 <SelectValue placeholder="All Campaigns" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Campaigns</SelectItem>
+                <SelectItem value="all">All Campaigns</SelectItem>
                 {campaigns.map((campaign) => (
                   <SelectItem key={campaign._id} value={campaign._id}>
                     {campaign.name}

@@ -503,12 +503,12 @@ export function WhatsAppInboxPage() {
                     className="pl-9"
                   />
                 </div>
-                <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+                <Select value={campaignFilter || "all"} onValueChange={(value) => setCampaignFilter(value === "all" ? "" : value)}>
                   <SelectTrigger className="text-sm">
                     <SelectValue placeholder="Filter by campaign" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Campaigns</SelectItem>
+                    <SelectItem value="all">All Campaigns</SelectItem>
                     {campaigns.map((campaign) => (
                       <SelectItem key={campaign._id} value={campaign._id}>
                         {campaign.name}

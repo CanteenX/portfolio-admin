@@ -478,14 +478,14 @@ export function EcommerceModulePage() {
                 placeholder="Search by title, SKU..."
               />
               <Select
-                value={productFilters.status ?? ""}
-                onValueChange={(value) => setProductFilter("status", value)}
+                value={productFilters.status || "all"}
+                onValueChange={(value) => setProductFilter("status", value === "all" ? "" : value)}
               >
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="archived">Archived</SelectItem>
@@ -595,14 +595,14 @@ export function EcommerceModulePage() {
                 placeholder="Search by order number, customer..."
               />
               <Select
-                value={orderFilters.status ?? ""}
-                onValueChange={(value) => setOrderFilter("status", value)}
+                value={orderFilters.status || "all"}
+                onValueChange={(value) => setOrderFilter("status", value === "all" ? "" : value)}
               >
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="open">Open</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                   <SelectItem value="shipped">Shipped</SelectItem>
