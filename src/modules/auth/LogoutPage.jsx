@@ -6,6 +6,17 @@ import { Button } from "../../components/ui/button";
 import { LogOut } from "lucide-react";
 
 export function LogoutPage() {
+  const { logout } = useAuth();
+
+  // This page used to render "You've Been Logged Out" without logging anyone
+  // out — useAuth and useEffect were imported and never called, so the token
+  // stayed in storage and the session stayed live behind a page claiming
+  // otherwise. Anything that routes here (a bookmark, a "log out" link) now
+  // actually ends the session.
+  useEffect(() => {
+    logout();
+  }, [logout]);
+
   return (
     <CoverAuthLayout>
       <div className="text-center">
