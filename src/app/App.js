@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { RouteErrorBoundary } from "../components/common/RouteErrorBoundary";
 import { useAuth } from "../core/auth/AuthContext";
 import { PermissionProtected } from "../core/router/PermissionProtected";
 import { FeatureFlagProvider } from "../core/feature-flags/FeatureFlagContext";
@@ -91,6 +92,7 @@ const LazyFallback = () => (
 
 function AuthenticatedRoutes() {
   const { session } = useAuth();
+  const location = useLocation();
 
   return (
     <FeatureFlagProvider flags={session?.uiFeatureFlags}>
@@ -98,6 +100,8 @@ function AuthenticatedRoutes() {
         <LayoutProvider>
           <ScrollToTop />
           <AppLayout>
+            {/* Keyed on the path so navigating away clears a crashed page. */}
+            <RouteErrorBoundary key={location.pathname}>
             <Suspense fallback={<LazyFallback />}>
             <PermissionProtected>
               <Routes>
@@ -188,6 +192,7 @@ function AuthenticatedRoutes() {
             </Routes>
               </PermissionProtected>
           </Suspense>
+            </RouteErrorBoundary>
           </AppLayout>
         </LayoutProvider>
       </MenuProvider>
